@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 )
 
 // Struct สำหรับรับ Request (ตาม Log)
@@ -73,10 +74,15 @@ func main() {
 	// URL เดิม: https://api-topup.sportbookprivate.com/api/v1/ext/winloseEsByMonthMulti
 	http.HandleFunc("/api/v1/ext/winloseEsByMonthMulti", winloseHandler)
 
-	fmt.Println("Mock Server started at port 8080")
-	fmt.Println("Endpoint: http://localhost:8080/api/v1/ext/winloseEsByMonthMulti")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	fmt.Printf("Mock Server started at port %s\n", port)
+	fmt.Printf("Endpoint: http://localhost:%s/api/v1/ext/winloseEsByMonthMulti\n", port)
 	
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatal(err)
 	}
 }
