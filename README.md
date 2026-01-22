@@ -86,6 +86,12 @@ Request body (ตัวอย่าง):
   "upsert": false
 }
 ```
+ตัวอย่าง `curl`:
+```bash
+curl -X POST http://localhost:8080/api/v1/ext/updateSnapshot ^
+  -H "Content-Type: application/json" ^
+  -d "{\"filter\":{\"data.username\":\"superadmin\",\"data.month\":\"01\",\"data.year\":\"2026\"},\"update\":{\"data.currency\":\"THB\"},\"upsert\":false}"
+```
 Response body (ตัวอย่าง):
 ```json
 {"code":0,"msg":"SUCCESS","matched":1,"modified":1,"upserted":null}
