@@ -5,3 +5,6 @@ services:
     buildCommand: go build -o app ./test.go
     startCommand: ./app
     autoDeploy: false
+    envVars:
+      - key: MONGO_URI
+        sync: false
