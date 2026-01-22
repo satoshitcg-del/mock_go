@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: mock-go-fresh
+    env: go
+    buildCommand: go build -o app ./test.go
+    startCommand: ./app
+    autoDeploy: false
