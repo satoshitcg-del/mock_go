@@ -1,1 +1,3 @@
 mock_go.exe
+.env
+*.snapshot.json
