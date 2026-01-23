@@ -23,6 +23,8 @@ HTML Console
 - Use the forms for insert/update/delete and the snapshotAll button.
 - CORS is enabled on the API (`Access-Control-Allow-Origin: *`) to allow local HTML usage.
 - For production, lock CORS to trusted origins only.
+- SnapshotAll view: click `GET snapshotAll`, then use `Table view` or `JSON view` to switch display.
+- If a form JSON is invalid, the page will show an error and stop the request.
 
 ตัวแปรแวดล้อม
 --------------

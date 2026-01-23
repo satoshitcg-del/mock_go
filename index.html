@@ -148,6 +148,58 @@
         border-radius: 14px;
         font-size: 0.9rem;
         min-height: 120px;
+        overflow-x: auto;
+      }
+
+      .response table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 16px;
+        font-size: 0.85rem;
+      }
+
+      .response th,
+      .response td {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .response th {
+        color: #ced4da;
+        font-weight: 600;
+      }
+
+      .json-key {
+        color: #74c0fc;
+      }
+
+      .json-string {
+        color: #ffd8a8;
+      }
+
+      .json-number {
+        color: #b197fc;
+      }
+
+      .json-boolean {
+        color: #63e6be;
+      }
+
+      .json-null {
+        color: #ff8787;
+      }
+
+      .response-toolbar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .response-toolbar button {
+        padding: 6px 12px;
+        font-size: 0.8rem;
       }
 
       .status {
@@ -198,8 +250,12 @@
         <div class="actions">
           <button class="secondary" id="loadSnapshot">GET snapshotAll</button>
         </div>
+        <div class="response-toolbar">
+          <button class="secondary" type="button" data-view="table">Table view</button>
+          <button class="secondary" type="button" data-view="json">JSON view</button>
+        </div>
         <div class="status" id="snapshotStatus">Ready.</div>
-        <pre class="response" id="snapshotResponse"></pre>
+        <div class="response" id="snapshotResponse"></div>
       </section>
 
       <form class="panel" id="insertForm">
@@ -211,7 +267,7 @@
           <button class="secondary" type="button" data-reset="insert">Reset</button>
         </div>
         <div class="status" id="insertStatus">Ready.</div>
-        <pre class="response" id="insertResponse"></pre>
+        <div class="response" id="insertResponse"></div>
       </form>
 
       <form class="panel" id="updateForm">
@@ -223,7 +279,7 @@
           <button class="secondary" type="button" data-reset="update">Reset</button>
         </div>
         <div class="status" id="updateStatus">Ready.</div>
-        <pre class="response" id="updateResponse"></pre>
+        <div class="response" id="updateResponse"></div>
       </form>
 
       <form class="panel" id="deleteForm">
@@ -235,7 +291,7 @@
           <button class="secondary" type="button" data-reset="delete">Reset</button>
         </div>
         <div class="status" id="deleteStatus">Ready.</div>
-        <pre class="response" id="deleteResponse"></pre>
+        <div class="response" id="deleteResponse"></div>
       </form>
     </main>
 
@@ -268,7 +324,7 @@
         },
         update: {
           filter: {
-            "data.username": "user_demo",
+            "data.web": "WEB1",
             "data.month": "01",
             "data.year": "2026",
           },
@@ -279,7 +335,7 @@
         },
         delete: {
           filter: {
-            "data.username": "user_demo",
+            "data.web": "WEB1",
             "data.month": "01",
             "data.year": "2026",
           },
@@ -299,6 +355,110 @@
       }
 
       loadSamples();
+
+      let snapshotView = "table";
+      let lastSnapshotData = null;
+
+      document.querySelectorAll("[data-view]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          snapshotView = btn.dataset.view;
+          if (lastSnapshotData) {
+            const responseEl = document.getElementById("snapshotResponse");
+            if (snapshotView === "json") {
+              renderJson(responseEl, lastSnapshotData);
+            } else {
+              renderSnapshotTable(responseEl, lastSnapshotData);
+            }
+          }
+        });
+      });
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      function highlightJson(jsonText) {
+        return escapeHtml(jsonText).replace(
+          /(\"(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\\"])*\"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)/g,
+          (match) => {
+            if (/^\"/.test(match)) {
+              return /:$/.test(match)
+                ? `<span class="json-key">${match}</span>`
+                : `<span class="json-string">${match}</span>`;
+            }
+            if (/true|false/.test(match)) {
+              return `<span class="json-boolean">${match}</span>`;
+            }
+            if (/null/.test(match)) {
+              return `<span class="json-null">${match}</span>`;
+            }
+            return `<span class="json-number">${match}</span>`;
+          }
+        );
+      }
+
+      function renderJson(responseEl, data) {
+        const pretty = JSON.stringify(data, null, 2);
+        responseEl.innerHTML = `<pre>${highlightJson(pretty)}</pre>`;
+      }
+
+      function renderSnapshotTable(responseEl, data) {
+        const items = Array.isArray(data) ? data : [data];
+        const columns = [
+          "_id",
+          "code",
+          "msg",
+          "username",
+          "currency",
+          "betAmt",
+          "validAmount",
+          "memberWl",
+          "memberComm",
+          "memberTotal",
+          "web",
+          "month",
+          "year",
+        ];
+        const rows = items
+          .filter((item) => item && typeof item === "object")
+          .map((item) => {
+            const payload = item.data && typeof item.data === "object" ? item.data : {};
+            return {
+              _id: item._id ? item._id : "-",
+              code: item.code ?? "-",
+              msg: item.msg ? item.msg : "-",
+              username: payload.username ? payload.username : "-",
+              currency: payload.currency ? payload.currency : "-",
+              betAmt: payload.betAmt ?? "-",
+              validAmount: payload.validAmount ?? "-",
+              memberWl: payload.memberWl ?? "-",
+              memberComm: payload.memberComm ?? "-",
+              memberTotal: payload.memberTotal ?? "-",
+              web: payload.web ? payload.web : "-",
+              month: payload.month ? payload.month : "-",
+              year: payload.year ? payload.year : "-",
+            };
+          })
+          .map(
+            (row) =>
+              `<tr>${columns
+                .map((col) => `<td>${escapeHtml(row[col])}</td>`)
+                .join("")}</tr>`
+          )
+          .join("");
+        const table = `
+          <table>
+            <thead>
+              <tr>${columns.map((col) => `<th>${col}</th>`).join("")}</tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+        responseEl.innerHTML = table;
+      }
 
       document.querySelectorAll("[data-reset]").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -335,10 +495,18 @@
           }
 
           statusEl.textContent = `Status: ${res.status} ${res.statusText}`;
-          responseEl.textContent =
-            typeof parsed === "string"
-              ? parsed
-              : JSON.stringify(parsed, null, 2);
+          if (endpoint === "/api/v1/ext/snapshotAll") {
+            lastSnapshotData = parsed;
+            if (snapshotView === "json") {
+              renderJson(responseEl, parsed);
+            } else {
+              renderSnapshotTable(responseEl, parsed);
+            }
+          } else if (typeof parsed === "string") {
+            responseEl.textContent = parsed;
+          } else {
+            renderJson(responseEl, parsed);
+          }
         } catch (err) {
           statusEl.textContent = "Request failed.";
           responseEl.textContent = err.message || String(err);
@@ -356,7 +524,15 @@
 
       document.getElementById("insertForm").addEventListener("submit", (event) => {
         event.preventDefault();
-        const body = JSON.parse(textareas.insert.value);
+        let body;
+        try {
+          body = JSON.parse(textareas.insert.value);
+        } catch (err) {
+          document.getElementById("insertStatus").textContent = "Invalid JSON.";
+          document.getElementById("insertResponse").textContent =
+            err.message || String(err);
+          return;
+        }
         runRequest({
           endpoint: "/api/v1/ext/insertSnapshot",
           body,
@@ -367,7 +543,15 @@
 
       document.getElementById("updateForm").addEventListener("submit", (event) => {
         event.preventDefault();
-        const body = JSON.parse(textareas.update.value);
+        let body;
+        try {
+          body = JSON.parse(textareas.update.value);
+        } catch (err) {
+          document.getElementById("updateStatus").textContent = "Invalid JSON.";
+          document.getElementById("updateResponse").textContent =
+            err.message || String(err);
+          return;
+        }
         runRequest({
           endpoint: "/api/v1/ext/updateSnapshot",
           body,
@@ -378,7 +562,15 @@
 
       document.getElementById("deleteForm").addEventListener("submit", (event) => {
         event.preventDefault();
-        const body = JSON.parse(textareas.delete.value);
+        let body;
+        try {
+          body = JSON.parse(textareas.delete.value);
+        } catch (err) {
+          document.getElementById("deleteStatus").textContent = "Invalid JSON.";
+          document.getElementById("deleteResponse").textContent =
+            err.message || String(err);
+          return;
+        }
         runRequest({
           endpoint: "/api/v1/ext/deleteSnapshot",
           body,
