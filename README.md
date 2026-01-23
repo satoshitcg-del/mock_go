@@ -16,6 +16,14 @@ Mock Go Fresh API
 go run test.go
 ```
 
+HTML Console
+------------
+- Open `index.html` in a browser.
+- Set the base URL (default: `http://localhost:8080`).
+- Use the forms for insert/update/delete and the snapshotAll button.
+- CORS is enabled on the API (`Access-Control-Allow-Origin: *`) to allow local HTML usage.
+- For production, lock CORS to trusted origins only.
+
 ตัวแปรแวดล้อม
 --------------
 - `MONGO_URI`: MongoDB connection string

@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mock Go Fresh API Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg-1: #f7f4ef;
+        --bg-2: #ebe4d9;
+        --ink: #1f1d1b;
+        --muted: #6f655c;
+        --accent: #1c7ed6;
+        --accent-2: #f08c00;
+        --card: #ffffff;
+        --border: #e1d7cb;
+        --shadow: 0 24px 60px rgba(31, 29, 27, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Space Grotesk", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 15% 20%, rgba(240, 140, 0, 0.18), transparent 55%),
+          radial-gradient(circle at 85% 15%, rgba(28, 126, 214, 0.15), transparent 50%),
+          linear-gradient(135deg, var(--bg-1), var(--bg-2));
+      }
+
+      header {
+        padding: 48px 24px 24px;
+        text-align: center;
+        animation: fadeIn 0.8s ease forwards;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(2rem, 4vw, 3rem);
+        letter-spacing: -0.03em;
+      }
+
+      p.lead {
+        margin: 0 auto;
+        max-width: 620px;
+        color: var(--muted);
+        font-size: 1.05rem;
+      }
+
+      main {
+        display: grid;
+        gap: 20px;
+        padding: 0 24px 48px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        animation: riseUp 0.8s ease forwards;
+      }
+
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 20px;
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .panel h2 {
+        margin: 0;
+        font-size: 1.25rem;
+      }
+
+      label {
+        font-size: 0.95rem;
+        color: var(--muted);
+      }
+
+      input,
+      textarea,
+      button {
+        font-family: "IBM Plex Mono", "Consolas", monospace;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        padding: 12px 14px;
+        font-size: 0.95rem;
+        background: #fffdfb;
+        color: var(--ink);
+      }
+
+      textarea {
+        min-height: 160px;
+        resize: vertical;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      button {
+        border: none;
+        border-radius: 999px;
+        padding: 10px 18px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      button.primary {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 10px 20px rgba(28, 126, 214, 0.2);
+      }
+
+      button.secondary {
+        background: #fff4e6;
+        color: var(--accent-2);
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+      }
+
+      .response {
+        white-space: pre-wrap;
+        background: #101215;
+        color: #f8f9fa;
+        padding: 16px;
+        border-radius: 14px;
+        font-size: 0.9rem;
+        min-height: 120px;
+      }
+
+      .status {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+
+      .wide {
+        grid-column: 1 / -1;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes riseUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Mock Go Fresh API Console</h1>
+      <p class="lead">
+        Quick HTML tool for insert, update, delete, and snapshotAll.
+      </p>
+    </header>
+
+    <main>
+      <section class="panel wide">
+        <h2>Base URL</h2>
+        <label for="baseUrl">API base (saved locally)</label>
+        <input id="baseUrl" type="text" placeholder="http://localhost:8080" />
+        <div class="actions">
+          <button class="secondary" id="loadSnapshot">GET snapshotAll</button>
+        </div>
+        <div class="status" id="snapshotStatus">Ready.</div>
+        <pre class="response" id="snapshotResponse"></pre>
+      </section>
+
+      <form class="panel" id="insertForm">
+        <h2>Insert snapshot</h2>
+        <label for="insertBody">Request body</label>
+        <textarea id="insertBody"></textarea>
+        <div class="actions">
+          <button class="primary" type="submit">POST insertSnapshot</button>
+          <button class="secondary" type="button" data-reset="insert">Reset</button>
+        </div>
+        <div class="status" id="insertStatus">Ready.</div>
+        <pre class="response" id="insertResponse"></pre>
+      </form>
+
+      <form class="panel" id="updateForm">
+        <h2>Update snapshot</h2>
+        <label for="updateBody">Request body</label>
+        <textarea id="updateBody"></textarea>
+        <div class="actions">
+          <button class="primary" type="submit">POST updateSnapshot</button>
+          <button class="secondary" type="button" data-reset="update">Reset</button>
+        </div>
+        <div class="status" id="updateStatus">Ready.</div>
+        <pre class="response" id="updateResponse"></pre>
+      </form>
+
+      <form class="panel" id="deleteForm">
+        <h2>Delete snapshot</h2>
+        <label for="deleteBody">Request body</label>
+        <textarea id="deleteBody"></textarea>
+        <div class="actions">
+          <button class="primary" type="submit">POST deleteSnapshot</button>
+          <button class="secondary" type="button" data-reset="delete">Reset</button>
+        </div>
+        <div class="status" id="deleteStatus">Ready.</div>
+        <pre class="response" id="deleteResponse"></pre>
+      </form>
+    </main>
+
+    <script>
+      const DEFAULT_BASE = "http://localhost:8080";
+      const storedBase = localStorage.getItem("mockGoBaseUrl");
+      const baseInput = document.getElementById("baseUrl");
+      baseInput.value = storedBase || window.location.origin || DEFAULT_BASE;
+      baseInput.addEventListener("input", () => {
+        localStorage.setItem("mockGoBaseUrl", baseInput.value.trim());
+      });
+
+      const samples = {
+        insert: {
+          code: 0,
+          msg: "SUCCESS",
+          data: {
+            username: "user_demo",
+            prefix: null,
+            currency: "USDT",
+            betAmt: -542668096.5,
+            validAmount: -533699975.73,
+            memberWl: -1226022.9421,
+            memberComm: 0,
+            memberTotal: -1226022.9421,
+            web: "WEB1",
+            month: "01",
+            year: "2026",
+          },
+        },
+        update: {
+          filter: {
+            "data.username": "user_demo",
+            "data.month": "01",
+            "data.year": "2026",
+          },
+          update: {
+            "data.currency": "THB",
+          },
+          upsert: false,
+        },
+        delete: {
+          filter: {
+            "data.username": "user_demo",
+            "data.month": "01",
+            "data.year": "2026",
+          },
+        },
+      };
+
+      const textareas = {
+        insert: document.getElementById("insertBody"),
+        update: document.getElementById("updateBody"),
+        delete: document.getElementById("deleteBody"),
+      };
+
+      function loadSamples() {
+        textareas.insert.value = JSON.stringify(samples.insert, null, 2);
+        textareas.update.value = JSON.stringify(samples.update, null, 2);
+        textareas.delete.value = JSON.stringify(samples.delete, null, 2);
+      }
+
+      loadSamples();
+
+      document.querySelectorAll("[data-reset]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          loadSamples();
+        });
+      });
+
+      async function runRequest({
+        endpoint,
+        method = "POST",
+        body,
+        statusEl,
+        responseEl,
+      }) {
+        statusEl.textContent = "Loading...";
+        responseEl.textContent = "";
+
+        try {
+          const base = baseInput.value.trim() || DEFAULT_BASE;
+          const url = `${base}${endpoint}`;
+          const options = { method, headers: {} };
+          if (body) {
+            options.headers["Content-Type"] = "application/json";
+            options.body = JSON.stringify(body);
+          }
+
+          const res = await fetch(url, options);
+          const text = await res.text();
+          let parsed = text;
+          try {
+            parsed = JSON.parse(text);
+          } catch (err) {
+            // Keep raw text for non-JSON responses.
+          }
+
+          statusEl.textContent = `Status: ${res.status} ${res.statusText}`;
+          responseEl.textContent =
+            typeof parsed === "string"
+              ? parsed
+              : JSON.stringify(parsed, null, 2);
+        } catch (err) {
+          statusEl.textContent = "Request failed.";
+          responseEl.textContent = err.message || String(err);
+        }
+      }
+
+      document.getElementById("loadSnapshot").addEventListener("click", () => {
+        runRequest({
+          endpoint: "/api/v1/ext/snapshotAll",
+          method: "GET",
+          statusEl: document.getElementById("snapshotStatus"),
+          responseEl: document.getElementById("snapshotResponse"),
+        });
+      });
+
+      document.getElementById("insertForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const body = JSON.parse(textareas.insert.value);
+        runRequest({
+          endpoint: "/api/v1/ext/insertSnapshot",
+          body,
+          statusEl: document.getElementById("insertStatus"),
+          responseEl: document.getElementById("insertResponse"),
+        });
+      });
+
+      document.getElementById("updateForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const body = JSON.parse(textareas.update.value);
+        runRequest({
+          endpoint: "/api/v1/ext/updateSnapshot",
+          body,
+          statusEl: document.getElementById("updateStatus"),
+          responseEl: document.getElementById("updateResponse"),
+        });
+      });
+
+      document.getElementById("deleteForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const body = JSON.parse(textareas.delete.value);
+        runRequest({
+          endpoint: "/api/v1/ext/deleteSnapshot",
+          body,
+          statusEl: document.getElementById("deleteStatus"),
+          responseEl: document.getElementById("deleteResponse"),
+        });
+      });
+    </script>
+  </body>
+</html>

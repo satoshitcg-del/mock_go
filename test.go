@@ -503,14 +503,27 @@ func deleteSnapshotHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func withCORS(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next(w, r)
+	}
+}
+
 func main() {
 	// สร้าง Route ให้ตรงกับ Path ใน Log
 	// URL เดิม: https://api-topup.sportbookprivate.com
-	http.HandleFunc("/api/v1/ext/winloseEsByMonthMulti", winloseHandler)
-	http.HandleFunc("/api/v1/ext/snapshotAll", snapshotAllHandler)
-	http.HandleFunc("/api/v1/ext/insertSnapshot", insertSnapshotHandler)
-	http.HandleFunc("/api/v1/ext/updateSnapshot", updateSnapshotHandler)
-	http.HandleFunc("/api/v1/ext/deleteSnapshot", deleteSnapshotHandler)
+	http.HandleFunc("/api/v1/ext/winloseEsByMonthMulti", withCORS(winloseHandler))
+	http.HandleFunc("/api/v1/ext/snapshotAll", withCORS(snapshotAllHandler))
+	http.HandleFunc("/api/v1/ext/insertSnapshot", withCORS(insertSnapshotHandler))
+	http.HandleFunc("/api/v1/ext/updateSnapshot", withCORS(updateSnapshotHandler))
+	http.HandleFunc("/api/v1/ext/deleteSnapshot", withCORS(deleteSnapshotHandler))
 
 	port := os.Getenv("PORT")
 	if port == "" {
