@@ -26,7 +26,7 @@ Endpoints
 1) POST `/api/v1/ext/winloseEsByMonthMulti`
 Request body:
 ```json
-{"cur":"THB","month":"01","year":"2026","username":"superadmin","web":"AMBK"}
+{"cur":"THB","month":"01","year":"2026","username":"user_demo","web":"WEB1"}
 ```
 Response body (ตัวอย่าง):
 ```json
@@ -34,7 +34,7 @@ Response body (ตัวอย่าง):
   "code": 0,
   "msg": "SUCCESS",
   "data": {
-    "username": "superadmin",
+    "username": "user_demo",
     "prefix": null,
     "currency": "THB",
     "betAmt": -542668096.59,
@@ -65,7 +65,7 @@ Request body (ตัวอย่าง):
     "memberWl": -1226022.9421,
     "memberComm": 0,
     "memberTotal": -1226022.9421,
-    "web": "AMBK",
+    "web": "WEB1",
     "month": "01",
     "year": "2026"
   }
@@ -81,7 +81,7 @@ Response body (ตัวอย่าง):
 Request body (ตัวอย่าง):
 ```json
 {
-  "filter": {"data.username":"superadmin","data.month":"01","data.year":"2026"},
+  "filter": {"data.username":"user_demo","data.month":"01","data.year":"2026"},
   "update": {"data.currency":"THB"},
   "upsert": false
 }
@@ -90,7 +90,7 @@ Request body (ตัวอย่าง):
 ```bash
 curl -X POST http://localhost:8080/api/v1/ext/updateSnapshot ^
   -H "Content-Type: application/json" ^
-  -d "{\"filter\":{\"data.username\":\"superadmin\",\"data.month\":\"01\",\"data.year\":\"2026\"},\"update\":{\"data.currency\":\"THB\"},\"upsert\":false}"
+  -d "{\"filter\":{\"data.username\":\"user_demo\",\"data.month\":\"01\",\"data.year\":\"2026\"},\"update\":{\"data.currency\":\"THB\"},\"upsert\":false}"
 ```
 Response body (ตัวอย่าง):
 ```json
@@ -101,7 +101,7 @@ Response body (ตัวอย่าง):
 ลบข้อมูลใน `test_data.snapshot` ตาม filter
 Request body (ตัวอย่าง):
 ```json
-{"filter":{"data.username":"superadmin","data.month":"01","data.year":"2026"}}
+{"filter":{"data.username":"user_demo","data.month":"01","data.year":"2026"}}
 ```
 Response body (ตัวอย่าง):
 ```json
