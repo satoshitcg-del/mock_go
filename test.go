@@ -180,12 +180,22 @@ func winloseHandler(w http.ResponseWriter, r *http.Request) {
 
 	var conds []bson.M
 	if req.Month != "" {
-		conds = append(conds, bson.M{
-			"$or": []bson.M{
-				{"month": req.Month},
-				{"data.month": req.Month},
-			},
-		})
+		// รองรับทั้ง "01" และ "1" สำหรับเดือน
+		monthPatterns := []string{req.Month}
+		if len(req.Month) == 1 && req.Month >= "1" && req.Month <= "9" {
+			// ถ้าเป็น "1"-"9" เพิ่ม "01"-"09"
+			monthPatterns = append(monthPatterns, "0"+req.Month)
+		} else if len(req.Month) == 2 && req.Month[0] == '0' && req.Month[1] >= '1' && req.Month[1] <= '9' {
+			// ถ้าเป็น "01"-"09" เพิ่ม "1"-"9"
+			monthPatterns = append(monthPatterns, string(req.Month[1]))
+		}
+		
+		var monthConds []bson.M
+		for _, m := range monthPatterns {
+			monthConds = append(monthConds, bson.M{"month": m})
+			monthConds = append(monthConds, bson.M{"data.month": m})
+		}
+		conds = append(conds, bson.M{"$or": monthConds})
 	}
 	if req.Year != "" {
 		conds = append(conds, bson.M{
