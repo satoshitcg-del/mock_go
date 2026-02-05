@@ -20,6 +20,7 @@ import (
 // Struct สำหรับรับ Request (ตาม Log)
 type RequestPayload struct {
 	Cur      string `json:"cur"`
+	Currency string `json:"currency"`
 	Month    string `json:"month"`
 	Year     string `json:"year"`
 	Username string `json:"username"`
@@ -197,8 +198,13 @@ func winloseHandler(w http.ResponseWriter, r *http.Request) {
 	if req.Username != "" {
 		conds = append(conds, bson.M{"data.username": req.Username})
 	}
-	if req.Cur != "" {
-		conds = append(conds, bson.M{"data.currency": req.Cur})
+	// รองรับทั้ง 'cur' และ 'currency' parameter
+	currencyValue := req.Cur
+	if currencyValue == "" {
+		currencyValue = req.Currency
+	}
+	if currencyValue != "" {
+		conds = append(conds, bson.M{"data.currency": currencyValue})
 	}
 	if req.Web != "" {
 		conds = append(conds, bson.M{
