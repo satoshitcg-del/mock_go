@@ -3,7 +3,7 @@ Mock Go Fresh API
 
 ภาพรวม
 -------
-เซิร์ฟเวอร์ Go สำหรับ mock API โดยใช้ MongoDB เป็นแหล่งข้อมูล
+เซิร์ฟเวอร์ Go สำหรับ mock API โดยใช้ MongoDB เป็นแหล่งข้อมูล พร้อม HTML Console ที่ออกแบบใหม่ รองรับการใช้งานที่ง่ายและสะดวก
 
 ข้อกำหนด
 ---------
@@ -16,15 +16,65 @@ Mock Go Fresh API
 go run test.go
 ```
 
-HTML Console
-------------
-- Open `index.html` in a browser.
-- Set the base URL (default: `http://localhost:8080`).
-- Use the forms for insert/update/delete and the snapshotAll button.
-- CORS is enabled on the API (`Access-Control-Allow-Origin: *`) to allow local HTML usage.
-- For production, lock CORS to trusted origins only.
-- SnapshotAll view: click `GET snapshotAll`, then use `Table view` or `JSON view` to switch display.
-- If a form JSON is invalid, the page will show an error and stop the request.
+จากนั้นเปิด `index.html` ใน browser หรือเข้าไปที่ `http://localhost:8080`
+
+---
+
+HTML Console - คุณสมบัติใหม่
+------------------------------
+
+### 🎨 อินเทอร์เฟซที่ออกแบบใหม่
+- **ดีไซนทันสมัย** - ใช้ Color Palette แบบ Professional (Slate/Blue)
+- **รองรับ 2 ภาษา** - สลับภาษา EN/TH ได้ทันที
+- **Dark/Light Mode** - เปลี่ยนธีมได้ตามต้องการ
+- **Responsive** - รองรับทุกขนาดหน้าจอ (Desktop, Tablet, Mobile)
+
+### 📊 เมนูหลัก
+
+#### 1. Dashboard
+- แสดงสถิติสรุป: Total Records, Unique Users, Websites, Currencies
+- ตารางข้อมูลล่าสุด 5 รายการ
+- **Auto-refresh** ทุก 35 วินาที พร้อมตัวนับถอยหลัง
+
+#### 2. Query Data
+- ค้นหาข้อมูล Win/Lose ตามเงื่อนไข
+- Dropdown เดือนแสดงภาษาไทย (ม.ค., ก.พ., ...)
+- Dropdown ปี 2020-2030
+
+#### 3. Insert Record
+- **2 โหมดการกรอก**: Form Mode / JSON Mode
+- Form Mode: กรอกข้อมูลผ่านฟอร์มพร้อม Dropdown ที่ใช้งานง่าย
+- JSON Mode: วาง JSON โดยตรง
+- **Multi-month Insert**: เลือก "All Months" เพื่อ insert ทั้ง 12 เดือนในครั้งเดียว
+- Dropdown เดือน: 01 - Jan (ม.ค.), 02 - Feb (ก.พ.), ...
+- Dropdown ปี: 2020-2030
+
+#### 4. Manage Data
+- ตารางแสดงข้อมูลพร้อม Pagination
+- **Search/Filter** แบบ real-time
+- **Table View / JSON View** สลับกันได้
+- ปุ่ม Edit/Delete ในแต่ละแถว
+- **Auto-refresh** ทุก 35 วินาที
+
+#### 5. Settings
+- ตั้งค่า API Base URL
+- ตั้งค่า Theme (Light/Dark/System)
+- บันทึกการตั้งค่าลง localStorage
+
+### ✨ ฟีเจอร์พิเศษ
+
+| ฟีเจอร์ | รายละเอียด |
+|---------|------------|
+| 🌐 Bilingual | รองรับภาษาไทยและอังกฤษ |
+| 🌓 Dark Mode | สลับธีมสว่าง/มืดได้ |
+| ⏱️ Auto-refresh | รีเฟรชอัตโนมัติทุก 35 วินาทีที่ Dashboard และ Manage Data |
+| 🔢 Countdown | แสดงเวลานับถอยหลังก่อนรีเฟรช |
+| 📅 All Months | เลือก "All Months" เพื่อ insert ทั้ง 12 เดือน |
+| 🔔 Toast Notifications | แจ้งเตือนแบบ non-blocking |
+| 📝 Form/JSON Mode | สลับโหมดการกรอกข้อมูลได้ |
+| 📱 Responsive | ใช้งานได้บนทุกอุปกรณ์ |
+
+---
 
 ตัวแปรแวดล้อม
 --------------
@@ -33,12 +83,16 @@ HTML Console
 
 Endpoints
 ---------
-1) POST `/api/v1/ext/winloseEsByMonthMulti`
-Request body:
+
+### 1) POST `/api/v1/ext/winloseEsByMonthMulti`
+ค้นหาข้อมูล Win/Lose ตามเงื่อนไข
+
+**Request body:**
 ```json
 {"cur":"THB","month":"01","year":"2026","username":"user_demo","web":"WEB1"}
 ```
-Response body (ตัวอย่าง):
+
+**Response body:**
 ```json
 {
   "code": 0,
@@ -56,12 +110,13 @@ Response body (ตัวอย่าง):
 }
 ```
 
-2) GET `/api/v1/ext/snapshotAll`
+### 2) GET `/api/v1/ext/snapshotAll`
 ดึงข้อมูลทั้งหมดใน collection
 
-3) POST `/api/v1/ext/insertSnapshot`
+### 3) POST `/api/v1/ext/insertSnapshot`
 เพิ่มข้อมูลเข้า `test_data.snapshot`
-Request body (ตัวอย่าง):
+
+**Request body:**
 ```json
 {
   "code": 0,
@@ -81,14 +136,16 @@ Request body (ตัวอย่าง):
   }
 }
 ```
-Response body (ตัวอย่าง):
+
+**Response body:**
 ```json
 {"code":0,"msg":"SUCCESS","insertedId":"..."}
 ```
 
-4) POST `/api/v1/ext/updateSnapshot`
-แก้ไขข้อมูลใน `test_data.snapshot` โดยใช้ filter และ update
-Request body (ตัวอย่าง):
+### 4) POST `/api/v1/ext/updateSnapshot`
+แก้ไขข้อมูลโดยใช้ filter และ update
+
+**Request body:**
 ```json
 {
   "filter": {"data.username":"user_demo","data.month":"01","data.year":"2026"},
@@ -96,29 +153,37 @@ Request body (ตัวอย่าง):
   "upsert": false
 }
 ```
-ตัวอย่าง `curl`:
+
+**curl ตัวอย่าง:**
 ```bash
 curl -X POST http://localhost:8080/api/v1/ext/updateSnapshot ^
   -H "Content-Type: application/json" ^
   -d "{\"filter\":{\"data.username\":\"user_demo\",\"data.month\":\"01\",\"data.year\":\"2026\"},\"update\":{\"data.currency\":\"THB\"},\"upsert\":false}"
 ```
-Response body (ตัวอย่าง):
+
+**Response body:**
 ```json
 {"code":0,"msg":"SUCCESS","matched":1,"modified":1,"upserted":null}
 ```
 
-5) POST `/api/v1/ext/deleteSnapshot`
-ลบข้อมูลใน `test_data.snapshot` ตาม filter
-Request body (ตัวอย่าง):
+### 5) POST `/api/v1/ext/deleteSnapshot`
+ลบข้อมูลตาม filter
+
+**Request body:**
 ```json
 {"filter":{"data.username":"user_demo","data.month":"01","data.year":"2026"}}
 ```
-Response body (ตัวอย่าง):
+
+**Response body:**
 ```json
 {"code":0,"msg":"SUCCESS","deleted":1}
 ```
 
+---
+
 หมายเหตุ
 ---------
-- เงื่อนไขค้นหาจะรองรับ `month/year` ทั้งที่ root และใน `data`
+- เงื่อนไขค้นหารองรับ `month/year` ทั้งที่ root และใน `data`
 - `data` รองรับทั้งแบบ object และ array
+- CORS เปิดใช้งาน (`Access-Control-Allow-Origin: *`) สำหรับการใช้งาน local HTML
+- สำหรับ production ควรจำกัด CORS ให้เฉพาะ trusted origins
