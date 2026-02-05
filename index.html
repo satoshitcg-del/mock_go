@@ -1827,6 +1827,16 @@
                     </div>
                     <button class="btn btn-sm btn-secondary" onclick="copyResponse('insert')" data-i18n="btnCopyJson">Copy JSON</button>
                   </div>
+                  <!-- Progress Bar for All Months -->
+                  <div id="insertProgressContainer" style="display: none; padding: 12px 16px; background: var(--bg-tertiary); border-bottom: 1px solid var(--border);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.875rem;">
+                      <span id="insertProgressText" style="color: var(--text-secondary);">Inserting...</span>
+                      <span id="insertProgressPercent" style="color: var(--primary); font-weight: 600;">0%</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;">
+                      <div id="insertProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 4px; transition: width 0.3s ease;"></div>
+                    </div>
+                  </div>
                   <div class="response-body">
                     <pre id="insertResponseBody"></pre>
                   </div>
@@ -2245,6 +2255,8 @@
           monthOpt11: "11 - Nov (พ.ย.)",
           monthOpt12: "12 - Dec (ธ.ค.)",
           msgInserting: "Inserting",
+          msgInsertingProgress: "Inserting record",
+          msgOf: "of",
           msgRecordsCreated: "records created successfully",
           msgRecordsToCreate: "Records to create",
           msgSelectedMonths: "Selected months",
@@ -2410,6 +2422,8 @@
           monthOpt11: "11 - พ.ย.",
           monthOpt12: "12 - ธ.ค.",
           msgInserting: "กำลังเพิ่มข้อมูล",
+          msgInsertingProgress: "กำลังเพิ่มข้อมูล",
+          msgOf: "จาก",
           msgRecordsCreated: "รายการถูกสร้างสำเร็จ",
           msgRecordsToCreate: "จำนวนรายการที่จะสร้าง",
           msgSelectedMonths: "เดือนที่เลือก",
@@ -3051,9 +3065,11 @@
         const responsePanel = document.getElementById("insertResponse");
         const statusEl = document.getElementById("insertStatus");
         const bodyEl = document.getElementById("insertResponseBody");
+        const progressContainer = document.getElementById("insertProgressContainer");
 
         responsePanel.style.display = "block";
         statusEl.className = "response-status loading";
+        progressContainer.style.display = "none";
 
         if (insertMode === "json") {
           // Single JSON insert
@@ -3120,11 +3136,27 @@
             return;
           }
 
+          // Show progress bar for multiple inserts
+          const progressBar = document.getElementById("insertProgressBar");
+          const progressText = document.getElementById("insertProgressText");
+          const progressPercent = document.getElementById("insertProgressPercent");
+          
+          if (selectedMonths.length > 1) {
+            progressContainer.style.display = "block";
+          }
+
           const results = [];
           const errors = [];
           
           for (let i = 0; i < selectedMonths.length; i++) {
             const month = selectedMonths[i];
+            const percent = Math.round(((i + 1) / selectedMonths.length) * 100);
+            
+            // Update progress bar
+            progressBar.style.width = percent + "%";
+            progressText.textContent = `${translations[currentLang].msgInsertingProgress} ${i + 1} ${translations[currentLang].msgOf} ${selectedMonths.length} (month: ${month})`;
+            progressPercent.textContent = percent + "%";
+            
             statusEl.innerHTML = `<div class="spinner"></div> ${translations[currentLang].msgInserting} ${i + 1}/${selectedMonths.length} (month: ${month})...`;
             
             try {
@@ -3145,6 +3177,8 @@
           }
 
           // Show final result
+          progressContainer.style.display = "none";
+          
           if (errors.length === 0) {
             statusEl.className = "response-status success";
             statusEl.innerHTML = `
