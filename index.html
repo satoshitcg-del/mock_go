@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -6,304 +6,2503 @@
     <title>Mock Go Fresh API Console</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <style>
       :root {
-        color-scheme: light;
-        --bg-1: #f7f4ef;
-        --bg-2: #ebe4d9;
-        --ink: #1f1d1b;
-        --muted: #6f655c;
-        --accent: #1c7ed6;
-        --accent-2: #f08c00;
-        --card: #ffffff;
-        --border: #e1d7cb;
-        --shadow: 0 24px 60px rgba(31, 29, 27, 0.08);
+        /* Light Theme - Professional Color Palette */
+        --bg-primary: #f8fafc;
+        --bg-secondary: #ffffff;
+        --bg-tertiary: #f1f5f9;
+        --bg-hover: #e2e8f0;
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
+        --text-muted: #64748b;
+        --border: #e2e8f0;
+        --accent: #3b82f6;
+        --accent-hover: #2563eb;
+        --accent-light: #dbeafe;
+        --success: #22c55e;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --info: #0ea5e9;
+        --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+        --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.08);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        --radius: 10px;
+        --radius-lg: 16px;
+        --radius-sm: 6px;
+        --sidebar-width: 280px;
+      }
+
+      [data-theme="dark"] {
+        --bg-primary: #0f172a;
+        --bg-secondary: #1e293b;
+        --bg-tertiary: #334155;
+        --bg-hover: #475569;
+        --text-primary: #f8fafc;
+        --text-secondary: #cbd5e1;
+        --text-muted: #94a3b8;
+        --border: #334155;
+        --accent: #60a5fa;
+        --accent-hover: #3b82f6;
+        --accent-light: #1e3a5f;
+        --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+        --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
       }
 
       * {
         box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        scroll-behavior: smooth;
       }
 
       body {
-        margin: 0;
+        font-family: "Inter", "Noto Sans Thai", -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        line-height: 1.6;
         min-height: 100vh;
-        font-family: "Space Grotesk", "Segoe UI", sans-serif;
-        color: var(--ink);
-        background:
-          radial-gradient(circle at 15% 20%, rgba(240, 140, 0, 0.18), transparent 55%),
-          radial-gradient(circle at 85% 15%, rgba(28, 126, 214, 0.15), transparent 50%),
-          linear-gradient(135deg, var(--bg-1), var(--bg-2));
+        transition: background 0.3s ease, color 0.3s ease;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
 
-      header {
-        padding: 48px 24px 24px;
-        text-align: center;
-        animation: fadeIn 0.8s ease forwards;
+      /* Layout */
+      .app {
+        display: flex;
+        min-height: 100vh;
       }
 
-      h1 {
-        margin: 0 0 8px;
-        font-size: clamp(2rem, 4vw, 3rem);
-        letter-spacing: -0.03em;
-      }
-
-      p.lead {
-        margin: 0 auto;
-        max-width: 620px;
-        color: var(--muted);
-        font-size: 1.05rem;
-      }
-
-      main {
-        display: grid;
-        gap: 20px;
-        padding: 0 24px 48px;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        animation: riseUp 0.8s ease forwards;
-      }
-
-      .panel {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: 18px;
-        padding: 20px;
-        box-shadow: var(--shadow);
+      /* Sidebar */
+      .sidebar {
+        width: var(--sidebar-width);
+        background: var(--bg-secondary);
+        border-right: 1px solid var(--border);
         display: flex;
         flex-direction: column;
+        position: fixed;
+        height: 100vh;
+        left: 0;
+        top: 0;
+        z-index: 101;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .sidebar-header {
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border);
+        height: 70px;
+        display: flex;
+        align-items: center;
+        box-sizing: border-box;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+        font-size: 1.125rem;
+        color: var(--text-primary);
+        letter-spacing: -0.01em;
+      }
+
+      .logo-icon {
+        width: 38px;
+        height: 38px;
+        background: linear-gradient(135deg, var(--accent) 0%, #6366f1 50%, #8b5cf6 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .logo-icon::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 50%;
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.15), transparent);
+        border-radius: 10px 10px 0 0;
+      }
+
+      .logo-icon svg {
+        width: 22px;
+        height: 22px;
+        z-index: 1;
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+      }
+
+      .sidebar-nav {
+        flex: 1;
+        padding: 12px;
+        overflow-y: auto;
+      }
+
+      .nav-section {
+        margin-bottom: 24px;
+      }
+
+      .nav-section:first-child {
+        margin-top: 8px;
+      }
+
+      .nav-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+        padding: 0 14px;
+        margin-bottom: 8px;
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+        position: relative;
+        margin: 2px 0;
+      }
+
+      .nav-item:hover {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        transform: translateX(2px);
+      }
+
+      .nav-item.active {
+        background: linear-gradient(135deg, var(--accent-light) 0%, rgba(59, 130, 246, 0.1) 100%);
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .nav-item.active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 20px;
+        background: var(--accent);
+        border-radius: 0 4px 4px 0;
+      }
+
+      .nav-icon {
+        width: 20px;
+        height: 20px;
+        opacity: 0.6;
+        flex-shrink: 0;
+        transition: opacity 0.2s;
+      }
+
+      .nav-item:hover .nav-icon {
+        opacity: 0.8;
+      }
+
+      .nav-item.active .nav-icon {
+        opacity: 1;
+      }
+
+      .sidebar-footer {
+        padding: 18px 20px;
+        border-top: 1px solid var(--border);
+        background: linear-gradient(to top, var(--bg-primary), transparent);
+      }
+
+      .connection-status {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+        font-weight: 500;
+      }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--success);
+        animation: pulse 2s infinite;
+        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+      }
+
+      .status-dot.error {
+        background: var(--danger);
+        animation: none;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+      }
+
+      @keyframes pulse {
+        0%, 100% { 
+          opacity: 1; 
+          transform: scale(1);
+        }
+        50% { 
+          opacity: 0.6; 
+          transform: scale(0.9);
+        }
+      }
+
+      /* Main Content */
+      .main {
+        flex: 1;
+        margin-left: var(--sidebar-width);
+        min-height: 100vh;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border);
+        padding: 0 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        height: 70px;
+        box-sizing: border-box;
+      }
+
+      [data-theme="dark"] .header {
+        background: rgba(30, 41, 59, 0.8);
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .menu-btn {
+        display: none;
+        padding: 10px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        cursor: pointer;
+        border-radius: var(--radius);
+        transition: all 0.2s;
+      }
+
+      .menu-btn:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+        transform: scale(1.05);
+      }
+
+      .page-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .header-right {
+        display: flex;
+        align-items: center;
         gap: 12px;
       }
 
-      .panel h2 {
-        margin: 0;
-        font-size: 1.25rem;
-      }
-
-      label {
-        font-size: 0.95rem;
-        color: var(--muted);
-      }
-
-      input,
-      textarea,
-      button {
-        font-family: "IBM Plex Mono", "Consolas", monospace;
-      }
-
-      input,
-      textarea {
-        width: 100%;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        padding: 12px 14px;
-        font-size: 0.95rem;
-        background: #fffdfb;
-        color: var(--ink);
-      }
-
-      textarea {
-        min-height: 160px;
-        resize: vertical;
-      }
-
-      .actions {
+      .lang-toggle {
         display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
+        align-items: center;
+        background: var(--bg-tertiary);
+        border-radius: var(--radius);
+        padding: 4px;
+        gap: 4px;
+        border: 1px solid var(--border);
       }
 
-      button {
+      .lang-btn {
+        padding: 7px 14px;
+        border-radius: var(--radius-sm);
         border: none;
-        border-radius: 999px;
-        padding: 10px 18px;
-        font-size: 0.95rem;
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.8125rem;
         font-weight: 600;
         cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .lang-btn:hover {
+        color: var(--text-primary);
+        background: rgba(255, 255, 255, 0.5);
+      }
+
+      .lang-btn.active {
+        background: var(--bg-secondary);
+        color: var(--accent);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .btn-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: var(--radius);
+        border: 1.5px solid var(--border);
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .btn-icon:hover {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border-color: var(--text-muted);
+        transform: scale(1.05);
+        box-shadow: var(--shadow-sm);
+      }
+
+      /* Content */
+      .content {
+        padding: 36px;
+        max-width: 1400px;
+      }
+
+      /* Tabs */
+      .tab-panel {
+        display: none;
+      }
+
+      .tab-panel.active {
+        display: block;
+        animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      @keyframes fadeInUp {
+        from { 
+          opacity: 0; 
+          transform: translateY(16px) scale(0.98); 
+        }
+        to { 
+          opacity: 1; 
+          transform: translateY(0) scale(1); 
+        }
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      /* Cards */
+      .card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        transition: box-shadow 0.3s ease, transform 0.2s ease;
+      }
+
+      .card:hover {
+        box-shadow: var(--shadow);
+      }
+
+      .card-header {
+        padding: 22px 26px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        background: linear-gradient(to right, transparent, rgba(59, 130, 246, 0.02));
+      }
+
+      .card-title {
+        font-size: 1.05rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text-primary);
+        letter-spacing: -0.01em;
+      }
+
+      .card-body {
+        padding: 26px;
+      }
+
+      /* Stats Grid */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+        margin-bottom: 28px;
+      }
+
+      .stat-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        box-shadow: var(--shadow-sm);
+        position: relative;
+        overflow: hidden;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
       }
 
-      button.primary {
-        background: var(--accent);
-        color: #fff;
-        box-shadow: 0 10px 20px rgba(28, 126, 214, 0.2);
+      .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
       }
 
-      button.secondary {
-        background: #fff4e6;
-        color: var(--accent-2);
+      .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--accent), #8b5cf6);
+        opacity: 0;
+        transition: opacity 0.3s;
       }
 
-      button:hover {
+      .stat-card:hover::before {
+        opacity: 1;
+      }
+
+      .stat-label {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+      }
+
+      .stat-change {
+        font-size: 0.75rem;
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: 500;
+      }
+
+      .stat-change.positive { color: var(--success); }
+      .stat-change.negative { color: var(--danger); }
+
+      /* Forms */
+      .form-group {
+        margin-bottom: 22px;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 18px;
+      }
+
+      label {
+        display: block;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+      }
+
+      input, textarea, select {
+        font-family: "Inter", "Noto Sans Thai", sans-serif;
+        width: 100%;
+        padding: 11px 16px;
+        background: var(--bg-secondary);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      input:hover, textarea:hover, select:hover {
+        border-color: var(--text-muted);
+      }
+
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 4px var(--accent-light);
+        background: var(--bg-secondary);
+      }
+
+      textarea {
+        font-family: "JetBrains Mono", monospace;
+        min-height: 200px;
+        resize: vertical;
+        line-height: 1.6;
+        line-height: 1.6;
+      }
+
+      /* Buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 11px 20px;
+        border-radius: var(--radius);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border: none;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn:active {
+        transform: scale(0.98);
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--accent) 0%, #4f46e5 100%);
+        color: white;
+        box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
+      }
+
+      .btn-primary:hover {
+        background: linear-gradient(135deg, var(--accent-hover) 0%, #4338ca 100%);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
         transform: translateY(-1px);
       }
 
-      .response {
-        white-space: pre-wrap;
-        background: #101215;
-        color: #f8f9fa;
-        padding: 16px;
-        border-radius: 14px;
-        font-size: 0.9rem;
-        min-height: 120px;
-        overflow-x: auto;
+      .btn-secondary {
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
       }
 
-      .response table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 16px;
-        font-size: 0.85rem;
+      .btn-secondary:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+        border-color: var(--text-muted);
       }
 
-      .response th,
-      .response td {
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        padding: 8px;
-        text-align: left;
-        vertical-align: top;
+      .btn-danger {
+        background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+        color: white;
+        box-shadow: 0 1px 3px rgba(239, 68, 68, 0.3);
       }
 
-      .response th {
-        color: #ced4da;
-        font-weight: 600;
+      .btn-danger:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        transform: translateY(-1px);
       }
 
-      .json-key {
-        color: #74c0fc;
+      .btn-success {
+        background: linear-gradient(135deg, var(--success) 0%, #16a34a 100%);
+        color: white;
+        box-shadow: 0 1px 3px rgba(34, 197, 94, 0.3);
       }
 
-      .json-string {
-        color: #ffd8a8;
+      .btn-success:hover {
+        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+        transform: translateY(-1px);
       }
 
-      .json-number {
-        color: #b197fc;
+      .btn-sm {
+        padding: 7px 14px;
+        font-size: 0.8125rem;
       }
 
-      .json-boolean {
-        color: #63e6be;
-      }
-
-      .json-null {
-        color: #ff8787;
-      }
-
-      .response-toolbar {
+      .btn-group {
         display: flex;
         gap: 8px;
         flex-wrap: wrap;
       }
 
-      .response-toolbar button {
-        padding: 6px 12px;
-        font-size: 0.8rem;
+      /* Toolbar */
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+        padding: 16px;
+        background: var(--bg-primary);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
       }
 
-      .status {
-        font-size: 0.85rem;
-        color: var(--muted);
+      .toolbar-left, .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
       }
 
-      .wide {
-        grid-column: 1 / -1;
+      .search-box {
+        position: relative;
+        min-width: 260px;
       }
 
-      @keyframes fadeIn {
-        from {
+      .search-box input {
+        padding-left: 40px;
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        color: var(--text-muted);
+        pointer-events: none;
+      }
+
+      /* Table */
+      .table-container {
+        overflow-x: auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-xs);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.875rem;
+      }
+
+      th, td {
+        padding: 14px 18px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+      }
+
+      th {
+        background: linear-gradient(to bottom, var(--bg-tertiary), var(--bg-primary));
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      th:first-child {
+        border-radius: var(--radius) 0 0 0;
+      }
+
+      th:last-child {
+        border-radius: 0 var(--radius) 0 0;
+      }
+
+      tr {
+        transition: background 0.15s ease;
+      }
+
+      tr:hover td {
+        background: var(--bg-tertiary);
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      tr:last-child td:first-child {
+        border-radius: 0 0 0 var(--radius);
+      }
+
+      tr:last-child td:last-child {
+        border-radius: 0 0 var(--radius) 0;
+      }
+
+      .cell-mono {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.8125rem;
+      }
+
+      .cell-truncate {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* Badges */
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+
+      .badge-blue {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1d4ed8;
+        border: 1px solid rgba(29, 78, 216, 0.25);
+      }
+
+      .badge-green {
+        background: linear-gradient(135deg, #d1fae5 0%, #dcfce7 100%);
+        color: #059669;
+        border: 1px solid rgba(34, 197, 94, 0.2);
+      }
+
+      .badge-red {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #dc2626;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+      }
+
+      .badge-gray {
+        background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-hover) 100%);
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
+      }
+
+      [data-theme="dark"] .badge-blue {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        color: #93c5fd;
+        border: 1px solid rgba(147, 197, 253, 0.3);
+        box-shadow: 0 0 12px rgba(59, 130, 246, 0.15);
+      }
+
+      [data-theme="dark"] .badge-green {
+        background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+        color: #34d399;
+        border: 1px solid rgba(52, 211, 153, 0.2);
+      }
+
+      [data-theme="dark"] .badge-red {
+        background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+        color: #f87171;
+        border: 1px solid rgba(248, 113, 113, 0.2);
+      }
+
+      /* Response Panel */
+      .response-panel {
+        margin-top: 24px;
+        border-radius: var(--radius);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .response-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 18px;
+        background: linear-gradient(to right, var(--bg-tertiary), var(--bg-primary));
+        border: 1px solid var(--border);
+        border-bottom: none;
+        border-radius: var(--radius) var(--radius) 0 0;
+      }
+
+      .response-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+      }
+
+      .response-status.success { color: var(--success); }
+      .response-status.error { color: var(--danger); }
+      .response-status.loading { color: var(--info); }
+
+      .response-body {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: #e2e8f0;
+        padding: 18px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.8125rem;
+        line-height: 1.7;
+        overflow-x: auto;
+        max-height: 400px;
+        overflow-y: auto;
+        border-radius: 0 0 var(--radius) var(--radius);
+        border: 1px solid var(--border);
+        border-top: none;
+      }
+
+      .response-body pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      /* JSON Syntax Highlighting */
+      .json-key { color: #7dd3fc; font-weight: 500; }
+      .json-string { color: #86efac; }
+      .json-number { color: #fca5a5; font-weight: 500; }
+      .json-boolean { color: #fcd34d; font-weight: 600; }
+      .json-null { color: #c4b5fd; font-style: italic; }
+
+      /* Toast Notifications */
+      .toast-container {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .toast {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px 20px;
+        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 320px;
+        max-width: 420px;
+        animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .toast::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+      }
+
+      .toast-success::before { background: var(--success); }
+      .toast-error::before { background: var(--danger); }
+      .toast-info::before { background: var(--info); }
+
+      @keyframes slideIn {
+        from { transform: translateX(100%) scale(0.9); opacity: 0; }
+        to { transform: translateX(0) scale(1); opacity: 1; }
+      }
+
+      .toast-icon {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-weight: 600;
+        font-size: 0.875rem;
+      }
+
+      .toast-success .toast-icon { 
+        background: linear-gradient(135deg, var(--success) 0%, #16a34a 100%); 
+        color: white; 
+        box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+      }
+      .toast-error .toast-icon { 
+        background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%); 
+        color: white; 
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+      }
+      .toast-info .toast-icon { 
+        background: linear-gradient(135deg, var(--info) 0%, #0284c7 100%); 
+        color: white; 
+        box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
+      }
+
+      .toast-content {
+        flex: 1;
+      }
+
+      .toast-title {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+        letter-spacing: -0.01em;
+      }
+
+      .toast-message {
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+        margin-top: 3px;
+        line-height: 1.4;
+      }
+
+      .toast-close {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 6px;
+        border-radius: var(--radius-sm);
+        transition: all 0.2s;
+      }
+
+      .toast-close:hover {
+        color: var(--text-primary);
+        background: var(--bg-tertiary);
+      }
+
+      /* Empty State */
+      .empty-state {
+        text-align: center;
+        padding: 70px 24px;
+        color: var(--text-muted);
+      }
+
+      .empty-icon {
+        width: 72px;
+        height: 72px;
+        margin: 0 auto 20px;
+        background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-hover) 100%);
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .empty-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+        letter-spacing: -0.01em;
+      }
+
+      /* Modal */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgb(15 23 42 / 0.6);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .modal {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        transform: scale(0.95) translateY(10px);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid var(--border);
+      }
+
+      .modal-overlay.active .modal {
+        transform: scale(1) translateY(0);
+      }
+
+      .modal-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--border);
+        background: linear-gradient(to right, var(--bg-secondary), var(--bg-primary));
+      }
+
+      .modal-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        letter-spacing: -0.01em;
+      }
+
+      .modal-body {
+        padding: 24px;
+      }
+
+      .modal-footer {
+        padding: 18px 24px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        background: var(--bg-primary);
+      }
+
+      /* Settings Form */
+      .settings-form {
+        max-width: 400px;
+      }
+
+      /* Mobile Sidebar */
+      .sidebar-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgb(0 0 0 / 0.5);
+        z-index: 99;
+      }
+
+      /* Responsive */
+      @media (max-width: 1024px) {
+        .sidebar {
+          transform: translateX(-100%);
+          box-shadow: none;
+        }
+
+        .sidebar.open {
+          transform: translateX(0);
+          box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .main {
+          margin-left: 0;
+        }
+
+        .menu-btn {
+          display: flex;
+        }
+
+        .sidebar-backdrop {
+          display: block;
           opacity: 0;
-          transform: translateY(-10px);
+          visibility: hidden;
+          transition: all 0.3s;
+          background: rgba(15, 23, 42, 0.5);
+          backdrop-filter: blur(4px);
         }
-        to {
+
+        .sidebar-backdrop.active {
           opacity: 1;
-          transform: translateY(0);
+          visibility: visible;
         }
       }
 
-      @keyframes riseUp {
-        from {
-          opacity: 0;
-          transform: translateY(20px);
+      @media (max-width: 768px) {
+        .stats-grid {
+          grid-template-columns: repeat(2, 1fr);
         }
-        to {
-          opacity: 1;
-          transform: translateY(0);
+        
+        .form-row {
+          grid-template-columns: 1fr;
         }
+        
+        .toolbar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        
+        .toolbar-left, .toolbar-right {
+          width: 100%;
+        }
+        
+        .search-box {
+          min-width: 100%;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .content {
+          padding: 20px;
+        }
+
+        .header {
+          padding: 0 20px;
+          height: 64px;
+        }
+        
+        .sidebar-header {
+          height: 64px;
+          padding: 16px 20px;
+        }
+
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .toolbar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .toolbar-left, .toolbar-right {
+          width: 100%;
+        }
+
+        .search-box {
+          min-width: 0;
+        }
+
+        .lang-toggle {
+          order: -1;
+        }
+
+        .lang-btn {
+          padding: 4px 8px;
+          font-size: 0.75rem;
+        }
+        
+        .card-header {
+          padding: 18px 20px;
+        }
+        
+        .card-body {
+          padding: 20px;
+        }
+        
+        .page-title {
+          font-size: 1.1rem;
+        }
+        
+        .toast-container {
+          left: 16px;
+          right: 16px;
+          top: 16px;
+        }
+        
+        .toast {
+          min-width: auto;
+          max-width: none;
+          width: 100%;
+        }
+      }
+
+
+
+      /* Loading Spinner */
+      .spinner {
+        width: 20px;
+        height: 20px;
+        border: 2.5px solid var(--border);
+        border-top-color: var(--accent);
+        border-right-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      /* Tab Buttons */
+      .tab-buttons {
+        display: flex;
+        gap: 4px;
+        background: var(--bg-tertiary);
+        padding: 4px;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+      }
+
+      .tab-btn {
+        padding: 7px 16px;
+        border-radius: var(--radius-sm);
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.8125rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .tab-btn:hover {
+        color: var(--text-primary);
+        background: rgba(255, 255, 255, 0.5);
+      }
+
+      .tab-btn.active {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        box-shadow: var(--shadow-sm);
+        font-weight: 600;
+      }
+
+      /* Checkbox styling */
+      .checkbox-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        color: var(--text-secondary);
+        transition: color 0.2s;
+      }
+
+      .checkbox-wrapper:hover {
+        color: var(--text-primary);
+      }
+
+      .checkbox-wrapper input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: var(--accent);
+        border-radius: var(--radius-sm);
+      }
+
+      /* Month Selector - No special styles needed for regular select */
+
+      /* Pagination */
+      .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 24px;
+      }
+
+      .page-btn {
+        min-width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1.5px solid var(--border);
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border-radius: var(--radius);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .page-btn:hover:not(:disabled) {
+        background: var(--bg-tertiary);
+        border-color: var(--text-muted);
+        transform: translateY(-1px);
+      }
+
+      .page-btn.active {
+        background: linear-gradient(135deg, var(--accent) 0%, #4f46e5 100%);
+        color: white;
+        border-color: var(--accent);
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+      }
+
+      .page-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      /* Focus visible for accessibility */
+      *:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px var(--accent-light);
+      }
+
+      /* Smooth scrolling */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* Selection color */
+      ::selection {
+        background: var(--accent-light);
+        color: var(--accent);
+      }
+
+      /* Scrollbar styling */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--bg-tertiary);
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--text-muted);
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--text-secondary);
       }
     </style>
   </head>
   <body>
-    <header>
-      <h1>Mock Go Fresh API Console</h1>
-      <p class="lead">
-        Quick HTML tool for insert, update, delete, and snapshotAll.
-      </p>
-    </header>
+    <div class="app">
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <div class="logo">
+            <div class="logo-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                <path d="M12 12v8"/>
+                <path d="M3 12v8"/>
+                <path d="M21 12v8"/>
+              </svg>
+            </div>
+            <span data-i18n="appName">Mock Go Fresh</span>
+          </div>
+        </div>
 
-    <main>
-      <section class="panel wide">
-        <h2>Base URL</h2>
-        <label for="baseUrl">API base (saved locally)</label>
-        <input id="baseUrl" type="text" placeholder="http://localhost:8080" />
-        <div class="actions">
-          <button class="secondary" id="loadSnapshot">GET snapshotAll</button>
-        </div>
-        <div class="response-toolbar">
-          <button class="secondary" type="button" data-view="table">Table view</button>
-          <button class="secondary" type="button" data-view="json">JSON view</button>
-        </div>
-        <div class="status" id="snapshotStatus">Ready.</div>
-        <div class="response" id="snapshotResponse"></div>
-      </section>
+        <nav class="sidebar-nav">
+          <div class="nav-section">
+            <div class="nav-label" data-i18n="navOverview">Overview</div>
+            <button class="nav-item active" data-tab="dashboard">
+              <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+              </svg>
+              <span data-i18n="navDashboard">Dashboard</span>
+            </button>
+            <button class="nav-item" data-tab="query">
+              <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+              <span data-i18n="navQuery">Query Data</span>
+            </button>
+          </div>
 
-      <form class="panel" id="insertForm">
-        <h2>Insert snapshot</h2>
-        <label for="insertBody">Request body</label>
-        <textarea id="insertBody"></textarea>
-        <div class="actions">
-          <button class="primary" type="submit">POST insertSnapshot</button>
-          <button class="secondary" type="button" data-reset="insert">Reset</button>
-        </div>
-        <div class="status" id="insertStatus">Ready.</div>
-        <div class="response" id="insertResponse"></div>
-      </form>
+          <div class="nav-section">
+            <div class="nav-label" data-i18n="navDataManagement">Data Management</div>
+            <button class="nav-item" data-tab="insert">
+              <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              <span data-i18n="navInsert">Insert Record</span>
+            </button>
+            <button class="nav-item" data-tab="manage">
+              <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
+              </svg>
+              <span data-i18n="navManage">Manage Data</span>
+            </button>
+          </div>
 
-      <form class="panel" id="updateForm">
-        <h2>Update snapshot</h2>
-        <label for="updateBody">Request body</label>
-        <textarea id="updateBody"></textarea>
-        <div class="actions">
-          <button class="primary" type="submit">POST updateSnapshot</button>
-          <button class="secondary" type="button" data-reset="update">Reset</button>
-        </div>
-        <div class="status" id="updateStatus">Ready.</div>
-        <div class="response" id="updateResponse"></div>
-      </form>
+          <div class="nav-section">
+            <div class="nav-label" data-i18n="navConfiguration">Configuration</div>
+            <button class="nav-item" data-tab="settings">
+              <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              <span data-i18n="navSettings">Settings</span>
+            </button>
+          </div>
+        </nav>
 
-      <form class="panel" id="deleteForm">
-        <h2>Delete snapshot</h2>
-        <label for="deleteBody">Request body</label>
-        <textarea id="deleteBody"></textarea>
-        <div class="actions">
-          <button class="primary" type="submit">POST deleteSnapshot</button>
-          <button class="secondary" type="button" data-reset="delete">Reset</button>
+        <div class="sidebar-footer">
+          <div class="connection-status">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText" data-i18n="statusConnected">Connected</span>
+          </div>
         </div>
-        <div class="status" id="deleteStatus">Ready.</div>
-        <div class="response" id="deleteResponse"></div>
-      </form>
-    </main>
+      </aside>
+
+      <!-- Backdrop for mobile -->
+      <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+      <!-- Main Content -->
+      <main class="main">
+        <!-- Header -->
+        <header class="header">
+          <div class="header-left">
+            <button class="menu-btn" id="menuBtn">
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
+            </button>
+            <h1 class="page-title" id="pageTitle" data-i18n="titleDashboard">Dashboard</h1>
+          </div>
+          <div class="header-right">
+            <!-- Language Toggle -->
+            <div class="lang-toggle">
+              <button class="lang-btn active" data-lang="en">EN</button>
+              <button class="lang-btn" data-lang="th">TH</button>
+            </div>
+            <button class="btn-icon" id="themeToggle" title="Toggle theme">
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- Content -->
+        <div class="content">
+          <!-- Dashboard Tab -->
+          <div class="tab-panel active" id="dashboardPanel">
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-label" data-i18n="statTotalRecords">Total Records</div>
+                <div class="stat-value" id="statTotal">-</div>
+                <div class="stat-change positive" data-i18n="statInDatabase">in database</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label" data-i18n="statUniqueUsers">Unique Users</div>
+                <div class="stat-value" id="statUsers">-</div>
+                <div class="stat-change positive" data-i18n="statActiveUsers">active users</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label" data-i18n="statWebsites">Websites</div>
+                <div class="stat-value" id="statWebs">-</div>
+                <div class="stat-change" data-i18n="statTrackedSites">tracked sites</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label" data-i18n="statCurrencies">Currencies</div>
+                <div class="stat-value" id="statCurrencies">-</div>
+                <div class="stat-change" data-i18n="statSupported">supported</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  <span data-i18n="recentData">Recent Data</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <span id="dashboardAutoRefresh" class="badge badge-green" style="font-size: 0.75rem; display: none;">
+                    <span style="display: inline-flex; align-items: center; gap: 4px;">
+                      <span class="spinner" style="width: 12px; height: 12px; border-width: 1px;"></span>
+                      <span data-i18n="msgAutoRefresh">Auto 35s</span>
+                    </span>
+                  </span>
+                  <button class="btn btn-sm btn-primary" onclick="refreshDashboard()">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <span data-i18n="btnRefresh">Refresh</span>
+                  </button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="table-container">
+                  <table id="recentTable">
+                    <thead>
+                      <tr>
+                        <th data-i18n="colUsername">Username</th>
+                        <th data-i18n="colWeb">Web</th>
+                        <th data-i18n="colCurrency">Currency</th>
+                        <th data-i18n="colPeriod">Period</th>
+                        <th data-i18n="colBetAmount">Bet Amount</th>
+                        <th data-i18n="colMemberWL">Member WL</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td colspan="6" class="empty-state" data-i18n="msgClickRefresh">Click refresh to load data</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Query Tab -->
+          <div class="tab-panel" id="queryPanel">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                  </svg>
+                  <span data-i18n="titleQueryData">Query Win/Lose Data</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <form id="queryForm">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="qUsername" data-i18n="labelUsername">Username</label>
+                      <input type="text" id="qUsername" placeholder="e.g. superadmin" />
+                    </div>
+                    <div class="form-group">
+                      <label for="qWeb" data-i18n="labelWeb">Web</label>
+                      <input type="text" id="qWeb" placeholder="e.g. ABBK" />
+                    </div>
+                    <div class="form-group">
+                      <label for="qCur" data-i18n="labelCurrency">Currency</label>
+                      <select id="qCur">
+                        <option value="" data-i18n="optAll">All</option>
+                        <option value="THB">THB</option>
+                        <option value="USDT">USDT</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="qMonth" data-i18n="labelMonth">Month</label>
+                      <select id="qMonth">
+                        <option value="" data-i18n="optSelect">Select</option>
+                        <option value="01" data-i18n="monthOpt01">01 - Jan (ม.ค.)</option>
+                        <option value="02" data-i18n="monthOpt02">02 - Feb (ก.พ.)</option>
+                        <option value="03" data-i18n="monthOpt03">03 - Mar (มี.ค.)</option>
+                        <option value="04" data-i18n="monthOpt04">04 - Apr (เม.ย.)</option>
+                        <option value="05" data-i18n="monthOpt05">05 - May (พ.ค.)</option>
+                        <option value="06" data-i18n="monthOpt06">06 - Jun (มิ.ย.)</option>
+                        <option value="07" data-i18n="monthOpt07">07 - Jul (ก.ค.)</option>
+                        <option value="08" data-i18n="monthOpt08">08 - Aug (ส.ค.)</option>
+                        <option value="09" data-i18n="monthOpt09">09 - Sep (ก.ย.)</option>
+                        <option value="10" data-i18n="monthOpt10">10 - Oct (ต.ค.)</option>
+                        <option value="11" data-i18n="monthOpt11">11 - Nov (พ.ย.)</option>
+                        <option value="12" data-i18n="monthOpt12">12 - Dec (ธ.ค.)</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="qYear" data-i18n="labelYear">Year</label>
+                      <select id="qYear">
+                        <option value="" data-i18n="optSelect">Select</option>
+                        <option value="2020">2020</option>
+                        <option value="2021">2021</option>
+                        <option value="2022">2022</option>
+                        <option value="2023">2023</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                        <option value="2027">2027</option>
+                        <option value="2028">2028</option>
+                        <option value="2029">2029</option>
+                        <option value="2030">2030</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">
+                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                      </svg>
+                      <span data-i18n="btnSearch">Search</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="resetQuery()" data-i18n="btnReset">Reset</button>
+                  </div>
+                </form>
+
+                <div class="response-panel" id="queryResponse" style="display: none;">
+                  <div class="response-header">
+                    <div class="response-status" id="queryStatus">
+                      <div class="spinner"></div>
+                      <span data-i18n="msgLoading">Loading...</span>
+                    </div>
+                    <div class="btn-group">
+                      <button class="btn btn-sm btn-secondary" onclick="copyResponse('query')" data-i18n="btnCopyJson">Copy JSON</button>
+                    </div>
+                  </div>
+                  <div class="response-body">
+                    <pre id="queryResponseBody"></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Insert Tab -->
+          <div class="tab-panel" id="insertPanel">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                  </svg>
+                  <span data-i18n="titleInsertRecord">Insert New Record</span>
+                </div>
+                <div class="btn-group">
+                  <button class="btn btn-sm btn-secondary" onclick="loadInsertSample()" data-i18n="btnLoadSample">Load Sample</button>
+                  <button class="btn btn-sm btn-secondary" onclick="clearInsert()" data-i18n="btnClear">Clear</button>
+                </div>
+              </div>
+              <div class="card-body">
+                <!-- Mode Toggle -->
+                <div class="form-group" style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+                  <label style="margin-bottom: 0;" data-i18n="labelInputMode">Input Mode:</label>
+                  <div class="tab-buttons">
+                    <button type="button" class="tab-btn active" id="insertModeForm" onclick="setInsertMode('form')">Form</button>
+                    <button type="button" class="tab-btn" id="insertModeJson" onclick="setInsertMode('json')">JSON</button>
+                  </div>
+                </div>
+
+                <!-- Form Mode -->
+                <form id="insertForm" style="display: block;">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label data-i18n="labelUsername">Username <span style="color: var(--danger);">*</span></label>
+                      <input type="text" id="insertUsername" required placeholder="e.g. user_demo" />
+                    </div>
+                    <div class="form-group">
+                      <label data-i18n="labelWeb">Web <span style="color: var(--danger);">*</span></label>
+                      <input type="text" id="insertWeb" required placeholder="e.g. WEB1" />
+                    </div>
+                    <div class="form-group">
+                      <label data-i18n="labelCurrency">Currency</label>
+                      <input type="text" id="insertCurrency" placeholder="e.g. THB, USDT" value="THB" />
+                    </div>
+                  </div>
+                  
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label data-i18n="labelMonth">Month <span style="color: var(--danger);">*</span></label>
+                      <select id="insertMonth" required>
+                        <option value="" data-i18n="optSelect">Select</option>
+                        <option value="all" data-i18n="optAllMonths">All Months (01-12)</option>
+                        <option value="01" data-i18n="monthOpt01">01 - Jan (ม.ค.)</option>
+                        <option value="02" data-i18n="monthOpt02">02 - Feb (ก.พ.)</option>
+                        <option value="03" data-i18n="monthOpt03">03 - Mar (มี.ค.)</option>
+                        <option value="04" data-i18n="monthOpt04">04 - Apr (เม.ย.)</option>
+                        <option value="05" data-i18n="monthOpt05">05 - May (พ.ค.)</option>
+                        <option value="06" data-i18n="monthOpt06">06 - Jun (มิ.ย.)</option>
+                        <option value="07" data-i18n="monthOpt07">07 - Jul (ก.ค.)</option>
+                        <option value="08" data-i18n="monthOpt08">08 - Aug (ส.ค.)</option>
+                        <option value="09" data-i18n="monthOpt09">09 - Sep (ก.ย.)</option>
+                        <option value="10" data-i18n="monthOpt10">10 - Oct (ต.ค.)</option>
+                        <option value="11" data-i18n="monthOpt11">11 - Nov (พ.ย.)</option>
+                        <option value="12" data-i18n="monthOpt12">12 - Dec (ธ.ค.)</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label data-i18n="labelYear">Year <span style="color: var(--danger);">*</span></label>
+                      <select id="insertYear" required>
+                        <option value="" data-i18n="optSelect">Select</option>
+                        <option value="2020">2020</option>
+                        <option value="2021">2021</option>
+                        <option value="2022">2022</option>
+                        <option value="2023">2023</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                        <option value="2027">2027</option>
+                        <option value="2028">2028</option>
+                        <option value="2029">2029</option>
+                        <option value="2030">2030</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label data-i18n="labelPrefix">Prefix</label>
+                      <input type="text" id="insertPrefix" placeholder="null" />
+                    </div>
+                  </div>
+                  
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label data-i18n="labelBetAmount">Bet Amount</label>
+                      <input type="number" id="insertBetAmt" step="any" placeholder="0.00" value="0" />
+                    </div>
+                    <div class="form-group">
+                      <label data-i18n="labelValidAmount">Valid Amount</label>
+                      <input type="number" id="insertValidAmount" step="any" placeholder="0.00" value="0" />
+                    </div>
+                    <div class="form-group">
+                      <label data-i18n="labelMemberWL">Member WL</label>
+                      <input type="number" id="insertMemberWl" step="any" placeholder="0.00" value="0" />
+                    </div>
+                  </div>
+                  
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label data-i18n="labelMemberComm">Member Comm</label>
+                      <input type="number" id="insertMemberComm" step="any" placeholder="0.00" value="0" />
+                    </div>
+                    <div class="form-group">
+                      <label data-i18n="labelMemberTotal">Member Total</label>
+                      <input type="number" id="insertMemberTotal" step="any" placeholder="0.00" value="0" />
+                    </div>
+                    <div class="form-group">
+                      <label data-i18n="labelCode">Code</label>
+                      <input type="number" id="insertCode" value="0" />
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label data-i18n="labelMessage">Message</label>
+                    <input type="text" id="insertMsg" value="SUCCESS" />
+                  </div>
+                  
+                  <!-- Preview JSON -->
+                  <details style="margin-top: 16px; margin-bottom: 20px;">
+                    <summary style="cursor: pointer; color: var(--text-secondary); font-size: 0.875rem; user-select: none;" data-i18n="previewJson">
+                      Preview JSON
+                    </summary>
+                    <div class="response-body" style="border-radius: var(--radius); margin-top: 12px;">
+                      <pre id="insertJsonPreview" style="margin: 0;">{}</pre>
+                    </div>
+                  </details>
+                  
+                  <div class="btn-group">
+                    <button type="submit" class="btn btn-success">
+                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                      <span data-i18n="btnInsertRecord">Insert Record</span>
+                    </button>
+                  </div>
+                </form>
+
+                <!-- JSON Mode -->
+                <form id="insertJsonForm" style="display: none;">
+                  <div class="form-group">
+                    <label data-i18n="labelJsonData">JSON Data</label>
+                    <textarea id="insertBody" placeholder="Paste your JSON here..."></textarea>
+                  </div>
+                  <div class="btn-group">
+                    <button type="submit" class="btn btn-success">
+                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                      <span data-i18n="btnInsertRecord">Insert Record</span>
+                    </button>
+                  </div>
+                </form>
+
+                <div class="response-panel" id="insertResponse" style="display: none;">
+                  <div class="response-header">
+                    <div class="response-status" id="insertStatus">
+                      <div class="spinner"></div>
+                      <span data-i18n="msgProcessing">Processing...</span>
+                    </div>
+                    <button class="btn btn-sm btn-secondary" onclick="copyResponse('insert')" data-i18n="btnCopyJson">Copy JSON</button>
+                  </div>
+                  <div class="response-body">
+                    <pre id="insertResponseBody"></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Manage Tab -->
+          <div class="tab-panel" id="managePanel">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
+                  </svg>
+                  <span data-i18n="titleManageData">Manage Data</span>
+                </div>
+                <div class="btn-group">
+                  <button class="btn btn-sm btn-primary" onclick="loadAllData()">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <span data-i18n="btnRefresh">Refresh</span>
+                  </button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="toolbar">
+                  <div class="toolbar-left">
+                    <div class="search-box">
+                      <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                      </svg>
+                      <input type="text" id="manageSearch" data-i18n-placeholder="placeholderSearch" placeholder="Search records..." />
+                    </div>
+                    <select id="manageFilterField">
+                      <option value="all" data-i18n="optAllFields">All fields</option>
+                      <option value="username" data-i18n="optUsername">Username</option>
+                      <option value="web" data-i18n="optWeb">Web</option>
+                      <option value="currency" data-i18n="optCurrency">Currency</option>
+                    </select>
+                  </div>
+                  <div class="toolbar-right">
+                    <div class="tab-buttons">
+                      <button class="tab-btn active" data-view="table" data-i18n="viewTable">Table</button>
+                      <button class="tab-btn" data-view="json" data-i18n="viewJson">JSON</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="manageTableView">
+                  <div class="table-container">
+                    <table id="manageTable">
+                      <thead>
+                        <tr>
+                          <th data-i18n="colActions">Actions</th>
+                          <th data-i18n="colUsername">Username</th>
+                          <th data-i18n="colWeb">Web</th>
+                          <th data-i18n="colCurrency">Currency</th>
+                          <th data-i18n="colPeriod">Period</th>
+                          <th data-i18n="colBetAmount">Bet Amount</th>
+                          <th data-i18n="colValidAmount">Valid Amount</th>
+                          <th data-i18n="colMemberWL">Member WL</th>
+                          <th data-i18n="colTotal">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td colspan="9" class="empty-state">
+                            <div class="empty-icon">📊</div>
+                            <div class="empty-title" data-i18n="msgNoDataLoaded">No data loaded</div>
+                            <div data-i18n="msgClickRefreshData">Click refresh to load data from the server</div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="pagination" id="managePagination"></div>
+                </div>
+
+                <div id="manageJsonView" style="display: none;">
+                  <div class="response-body" style="border-radius: var(--radius);">
+                    <pre id="manageJsonBody" data-i18n="msgClickRefresh">Click refresh to load data</pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Settings Tab -->
+          <div class="tab-panel" id="settingsPanel">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  </svg>
+                  <span data-i18n="titleSettings">Settings</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="settings-form">
+                  <div class="form-group">
+                    <label for="baseUrl" data-i18n="labelApiBaseUrl">API Base URL</label>
+                    <input type="text" id="baseUrl" placeholder="http://localhost:8080" />
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="labelTheme">Theme</label>
+                    <div class="tab-buttons">
+                      <button class="tab-btn active" id="themeLight" data-i18n="themeLight">Light</button>
+                      <button class="tab-btn" id="themeDark" data-i18n="themeDark">Dark</button>
+                      <button class="tab-btn" id="themeSystem" data-i18n="themeSystem">System</button>
+                    </div>
+                  </div>
+                  <div class="btn-group">
+                    <button class="btn btn-primary" onclick="saveSettings()" data-i18n="btnSaveSettings">Save Settings</button>
+                    <button class="btn btn-secondary" onclick="resetSettings()" data-i18n="btnResetDefault">Reset to Default</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="editModal">
+      <div class="modal" style="max-width: 700px;">
+        <div class="modal-header">
+          <div class="modal-title" data-i18n="titleEditRecord">Edit Record</div>
+        </div>
+        <div class="modal-body">
+          <form id="editForm">
+            <!-- Hidden fields for filter -->
+            <input type="hidden" id="editOriginalUsername" />
+            <input type="hidden" id="editOriginalWeb" />
+            <input type="hidden" id="editOriginalMonth" />
+            <input type="hidden" id="editOriginalYear" />
+            <input type="hidden" id="editRecordId" />
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label data-i18n="labelUsername">Username</label>
+                <input type="text" id="editUsername" />
+              </div>
+              <div class="form-group">
+                <label data-i18n="labelWeb">Web</label>
+                <input type="text" id="editWeb" />
+              </div>
+              <div class="form-group">
+                <label data-i18n="labelCurrency">Currency</label>
+                <input type="text" id="editCurrency" placeholder="e.g. THB, USDT" />
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label data-i18n="labelMonth">Month</label>
+                <select id="editMonth">
+                  <option value="01" data-i18n="monthOpt01">01 - Jan (ม.ค.)</option>
+                  <option value="02" data-i18n="monthOpt02">02 - Feb (ก.พ.)</option>
+                  <option value="03" data-i18n="monthOpt03">03 - Mar (มี.ค.)</option>
+                  <option value="04" data-i18n="monthOpt04">04 - Apr (เม.ย.)</option>
+                  <option value="05" data-i18n="monthOpt05">05 - May (พ.ค.)</option>
+                  <option value="06" data-i18n="monthOpt06">06 - Jun (มิ.ย.)</option>
+                  <option value="07" data-i18n="monthOpt07">07 - Jul (ก.ค.)</option>
+                  <option value="08" data-i18n="monthOpt08">08 - Aug (ส.ค.)</option>
+                  <option value="09" data-i18n="monthOpt09">09 - Sep (ก.ย.)</option>
+                  <option value="10" data-i18n="monthOpt10">10 - Oct (ต.ค.)</option>
+                  <option value="11" data-i18n="monthOpt11">11 - Nov (พ.ย.)</option>
+                  <option value="12" data-i18n="monthOpt12">12 - Dec (ธ.ค.)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label data-i18n="labelYear">Year</label>
+                <select id="editYear">
+                  <option value="2020">2020</option>
+                  <option value="2021">2021</option>
+                  <option value="2022">2022</option>
+                  <option value="2023">2023</option>
+                  <option value="2024">2024</option>
+                  <option value="2025">2025</option>
+                  <option value="2026">2026</option>
+                  <option value="2027">2027</option>
+                  <option value="2028">2028</option>
+                  <option value="2029">2029</option>
+                  <option value="2030">2030</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label data-i18n="labelPrefix">Prefix</label>
+                <input type="text" id="editPrefix" placeholder="null" />
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label data-i18n="labelBetAmount">Bet Amount</label>
+                <input type="number" id="editBetAmt" step="any" />
+              </div>
+              <div class="form-group">
+                <label data-i18n="labelValidAmount">Valid Amount</label>
+                <input type="number" id="editValidAmount" step="any" />
+              </div>
+              <div class="form-group">
+                <label data-i18n="labelMemberWL">Member WL</label>
+                <input type="number" id="editMemberWl" step="any" />
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label data-i18n="labelMemberComm">Member Comm</label>
+                <input type="number" id="editMemberComm" step="any" />
+              </div>
+              <div class="form-group">
+                <label data-i18n="labelMemberTotal">Member Total</label>
+                <input type="number" id="editMemberTotal" step="any" />
+              </div>
+              <div class="form-group">
+                <label data-i18n="labelCode">Code</label>
+                <input type="number" id="editCode" value="0" />
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label data-i18n="labelMessage">Message</label>
+              <input type="text" id="editMsg" value="SUCCESS" />
+            </div>
+            
+            <div class="form-group">
+              <label class="checkbox-wrapper">
+                <input type="checkbox" id="editUpsert" />
+                <span data-i18n="labelUpsert">Create if not exists (upsert)</span>
+              </label>
+            </div>
+            
+            <!-- Advanced: Show JSON -->
+            <details style="margin-top: 16px;">
+              <summary style="cursor: pointer; color: var(--text-secondary); font-size: 0.875rem; user-select: none;" data-i18n="advancedJson">
+                JSON (Advanced)
+              </summary>
+              <div style="margin-top: 12px;">
+                <label style="font-size: 0.75rem; color: var(--text-muted);">Filter</label>
+                <textarea id="editFilter" rows="2" style="min-height: 60px; font-size: 0.75rem;"></textarea>
+              </div>
+              <div style="margin-top: 8px;">
+                <label style="font-size: 0.75rem; color: var(--text-muted);">Update</label>
+                <textarea id="editUpdate" rows="3" style="min-height: 80px; font-size: 0.75rem;"></textarea>
+              </div>
+            </details>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeEditModal()" data-i18n="btnCancel">Cancel</button>
+          <button class="btn btn-primary" onclick="submitEdit()" data-i18n="btnUpdateRecord">Update Record</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirm Modal -->
+    <div class="modal-overlay" id="deleteModal">
+      <div class="modal" style="max-width: 400px;">
+        <div class="modal-header">
+          <div class="modal-title" data-i18n="titleConfirmDelete">Confirm Delete</div>
+        </div>
+        <div class="modal-body">
+          <p style="color: var(--text-secondary);" data-i18n="msgConfirmDelete">Are you sure you want to delete this record? This action cannot be undone.</p>
+          <div class="form-group" style="margin-top: 16px;">
+            <label data-i18n="labelFilter">Filter</label>
+            <textarea id="deleteFilter" rows="3" readonly style="background: var(--bg-tertiary);"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeDeleteModal()" data-i18n="btnCancel">Cancel</button>
+          <button class="btn btn-danger" onclick="submitDelete()" data-i18n="btnDelete">Delete</button>
+        </div>
+      </div>
+    </div>
 
     <script>
-      const DEFAULT_BASE = "http://localhost:8080";
-      const storedBase = localStorage.getItem("mockGoBaseUrl");
-      const baseInput = document.getElementById("baseUrl");
-      baseInput.value = storedBase || window.location.origin || DEFAULT_BASE;
-      baseInput.addEventListener("input", () => {
-        localStorage.setItem("mockGoBaseUrl", baseInput.value.trim());
-      });
+      // ==================== i18n Translations ====================
+      const translations = {
+        en: {
+          // App
+          appName: "Mock Go Fresh",
+          
+          // Navigation
+          navOverview: "Overview",
+          navDashboard: "Dashboard",
+          navQuery: "Query Data",
+          navDataManagement: "Data Management",
+          navInsert: "Insert Record",
+          navManage: "Manage Data",
+          navConfiguration: "Configuration",
+          navSettings: "Settings",
+          
+          // Status
+          statusConnected: "Connected",
+          statusDisconnected: "Disconnected",
+          
+          // Page Titles
+          titleDashboard: "Dashboard",
+          titleQueryData: "Query Win/Lose Data",
+          titleInsertRecord: "Insert New Record",
+          titleManageData: "Manage Data",
+          titleSettings: "Settings",
+          titleEditRecord: "Edit Record",
+          titleConfirmDelete: "Confirm Delete",
+          
+          // Stats
+          statTotalRecords: "Total Records",
+          statUniqueUsers: "Unique Users",
+          statWebsites: "Websites",
+          statCurrencies: "Currencies",
+          statInDatabase: "in database",
+          statActiveUsers: "active users",
+          statTrackedSites: "tracked sites",
+          statSupported: "supported",
+          
+          // Labels
+          labelUsername: "Username",
+          labelWeb: "Web",
+          labelCurrency: "Currency",
+          labelMonth: "Month",
+          labelYear: "Year",
+          labelJsonData: "JSON Data",
+          labelApiBaseUrl: "API Base URL",
+          labelTheme: "Theme",
+          labelFilter: "Filter",
+          labelUpdateData: "Update Data",
+          labelUpsert: "Create if not exists (upsert)",
+          labelPrefix: "Prefix",
+          labelBetAmount: "Bet Amount",
+          labelValidAmount: "Valid Amount",
+          labelMemberWL: "Member WL",
+          labelMemberComm: "Member Comm",
+          labelMemberTotal: "Member Total",
+          labelCode: "Code",
+          labelMessage: "Message",
+          labelInputMode: "Input Mode",
+          
+          // Options
+          optAll: "All",
+          optSelect: "Select",
+          optAllFields: "All fields",
+          optUsername: "Username",
+          optWeb: "Web",
+          optCurrency: "Currency",
+          
+          // Buttons
+          btnRefresh: "Refresh",
+          btnSearch: "Search",
+          btnReset: "Reset",
+          btnLoadSample: "Load Sample",
+          btnClear: "Clear",
+          btnSelectAll: "Select All",
+          btnClearAll: "Clear All",
+          btnInsertRecord: "Insert Record",
+          btnCopyJson: "Copy JSON",
+          btnSaveSettings: "Save Settings",
+          btnResetDefault: "Reset to Default",
+          btnCancel: "Cancel",
+          btnUpdateRecord: "Update Record",
+          btnDelete: "Delete",
+          
+          // Views
+          viewTable: "Table",
+          viewJson: "JSON",
+          advancedJson: "JSON (Advanced)",
+          previewJson: "Preview JSON",
+          
+          // Theme
+          themeLight: "Light",
+          themeDark: "Dark",
+          themeSystem: "System",
+          
+          // Table Columns
+          recentData: "Recent Data",
+          colUsername: "Username",
+          colWeb: "Web",
+          colCurrency: "Currency",
+          colPeriod: "Period",
+          colBetAmount: "Bet Amount",
+          colMemberWL: "Member WL",
+          colValidAmount: "Valid Amount",
+          colTotal: "Total",
+          colActions: "Actions",
+          
+          // Messages
+          msgLoading: "Loading...",
+          msgProcessing: "Processing...",
+          msgClickRefresh: "Click refresh to load data",
+          msgClickRefreshData: "Click refresh to load data from the server",
+          msgNoDataLoaded: "No data loaded",
+          msgConfirmDelete: "Are you sure you want to delete this record? This action cannot be undone.",
+          msgAutoRefresh: "Auto 35s",
+          msgSelectAtLeastOneMonth: "Please select at least 1 month",
+          optAllMonths: "All Months (01-12)",
+          monthOpt01: "01 - Jan (ม.ค.)",
+          monthOpt02: "02 - Feb (ก.พ.)",
+          monthOpt03: "03 - Mar (มี.ค.)",
+          monthOpt04: "04 - Apr (เม.ย.)",
+          monthOpt05: "05 - May (พ.ค.)",
+          monthOpt06: "06 - Jun (มิ.ย.)",
+          monthOpt07: "07 - Jul (ก.ค.)",
+          monthOpt08: "08 - Aug (ส.ค.)",
+          monthOpt09: "09 - Sep (ก.ย.)",
+          monthOpt10: "10 - Oct (ต.ค.)",
+          monthOpt11: "11 - Nov (พ.ย.)",
+          monthOpt12: "12 - Dec (ธ.ค.)",
+          msgInserting: "Inserting",
+          msgRecordsCreated: "records created successfully",
+          msgRecordsToCreate: "Records to create",
+          msgSelectedMonths: "Selected months",
+          msgSampleData: "Sample data",
+          msgSuccessfullyCreated: "Successfully created",
+          msgMonthlyRecordsCreated: "monthly records created",
+          msgSuccessCount: "Success",
+          msgErrorCount: "Failed",
+          
+          // Toast
+          toastSuccess: "Success",
+          toastError: "Error",
+          toastInfo: "Info",
+          msgRecordInserted: "Record Inserted",
+          msgDataSaved: "Data saved to database",
+          msgRecordUpdated: "Record Updated",
+          msgChangesSaved: "Changes saved successfully",
+          msgRecordDeleted: "Record Deleted",
+          msgItemRemoved: "Item removed from database",
+          msgSettingsSaved: "Settings Saved",
+          msgPreferencesSaved: "Your preferences have been saved",
+          msgSettingsReset: "Settings Reset",
+          msgDefaultRestored: "Default settings restored",
+          msgConnectionSuccess: "Connection Test",
+          msgConnectedApi: "Successfully connected to API",
+          msgFailedLoad: "Failed to load",
+          msgCouldNotFetch: "Could not fetch data",
+          msgConnectionError: "Connection Error",
+          msgInvalidJson: "Invalid JSON",
+          msgUpdateFailed: "Update Failed",
+          msgDeleteFailed: "Delete Failed",
+          msgRequestFailed: "Request Failed",
+          
+          // Placeholders
+          placeholderSearch: "Search records...",
+        },
+        th: {
+          // App
+          appName: "Mock Go Fresh",
+          
+          // Navigation
+          navOverview: "ภาพรวม",
+          navDashboard: "แดชบอร์ด",
+          navQuery: "ค้นหาข้อมูล",
+          navDataManagement: "จัดการข้อมูล",
+          navInsert: "เพิ่มข้อมูล",
+          navManage: "จัดการข้อมูล",
+          navConfiguration: "การตั้งค่า",
+          navSettings: "ตั้งค่า",
+          
+          // Status
+          statusConnected: "เชื่อมต่อแล้ว",
+          statusDisconnected: "ไม่ได้เชื่อมต่อ",
+          
+          // Page Titles
+          titleDashboard: "แดชบอร์ด",
+          titleQueryData: "ค้นหาข้อมูล Win/Lose",
+          titleInsertRecord: "เพิ่มข้อมูลใหม่",
+          titleManageData: "จัดการข้อมูล",
+          titleSettings: "ตั้งค่า",
+          titleEditRecord: "แก้ไขข้อมูล",
+          titleConfirmDelete: "ยืนยันการลบ",
+          
+          // Stats
+          statTotalRecords: "จำนวนรายการทั้งหมด",
+          statUniqueUsers: "ผู้ใช้ที่ไม่ซ้ำ",
+          statWebsites: "เว็บไซต์",
+          statCurrencies: "สกุลเงิน",
+          statInDatabase: "ในฐานข้อมูล",
+          statActiveUsers: "ผู้ใช้ที่ใช้งาน",
+          statTrackedSites: "เว็บไซต์ที่ติดตาม",
+          statSupported: "รองรับ",
+          
+          // Labels
+          labelUsername: "ชื่อผู้ใช้",
+          labelWeb: "เว็บ",
+          labelCurrency: "สกุลเงิน",
+          labelMonth: "เดือน",
+          labelYear: "ปี",
+          labelJsonData: "ข้อมูล JSON",
+          labelApiBaseUrl: "URL หลักของ API",
+          labelTheme: "ธีม",
+          labelFilter: "ตัวกรอง",
+          labelUpdateData: "ข้อมูลที่อัปเดต",
+          labelUpsert: "สร้างใหม่ถ้าไม่มี (upsert)",
+          labelPrefix: "คำนำหน้า",
+          labelBetAmount: "ยอดเดิมพัน",
+          labelValidAmount: "ยอดที่ใช้งานได้",
+          labelMemberWL: "สมาชิก ชนะ/แพ้",
+          labelMemberComm: "คอมมิชชั่น",
+          labelMemberTotal: "ยอดรวม",
+          labelCode: "รหัส",
+          labelMessage: "ข้อความ",
+          labelInputMode: "โหมดการกรอก",
+          
+          // Options
+          optAll: "ทั้งหมด",
+          optSelect: "เลือก",
+          optAllFields: "ทุกฟิลด์",
+          optUsername: "ชื่อผู้ใช้",
+          optWeb: "เว็บ",
+          optCurrency: "สกุลเงิน",
+          
+          // Buttons
+          btnRefresh: "รีเฟรช",
+          btnSearch: "ค้นหา",
+          btnReset: "รีเซ็ต",
+          btnLoadSample: "โหลดตัวอย่าง",
+          btnClear: "ล้าง",
+          btnSelectAll: "เลือกทั้งหมด",
+          btnClearAll: "ล้างทั้งหมด",
+          btnInsertRecord: "เพิ่มข้อมูล",
+          btnCopyJson: "คัดลอก JSON",
+          btnSaveSettings: "บันทึกการตั้งค่า",
+          btnResetDefault: "รีเซ็ตเป็นค่าเริ่มต้น",
+          btnCancel: "ยกเลิก",
+          btnUpdateRecord: "อัปเดตข้อมูล",
+          btnDelete: "ลบ",
+          
+          // Views
+          viewTable: "ตาราง",
+          viewJson: "JSON",
+          advancedJson: "JSON (ขั้นสูง)",
+          previewJson: "ดูตัวอย่าง JSON",
+          
+          // Theme
+          themeLight: "สว่าง",
+          themeDark: "มืด",
+          themeSystem: "ตามระบบ",
+          
+          // Table Columns
+          recentData: "ข้อมูลล่าสุด",
+          colUsername: "ชื่อผู้ใช้",
+          colWeb: "เว็บ",
+          colCurrency: "สกุลเงิน",
+          colPeriod: "ช่วงเวลา",
+          colBetAmount: "ยอดเดิมพัน",
+          colMemberWL: "สมาชิก ชนะ/แพ้",
+          colValidAmount: "ยอดที่ใช้งานได้",
+          colTotal: "รวม",
+          colActions: "การกระทำ",
+          
+          // Messages
+          msgLoading: "กำลังโหลด...",
+          msgProcessing: "กำลังประมวลผล...",
+          msgClickRefresh: "คลิกรีเฟรชเพื่อโหลดข้อมูล",
+          msgClickRefreshData: "คลิกรีเฟรชเพื่อโหลดข้อมูลจากเซิร์ฟเวอร์",
+          msgNoDataLoaded: "ไม่มีข้อมูล",
+          msgConfirmDelete: "คุณแน่ใจหรือไม่ที่จะลบรายการนี้? การกระทำนี้ไม่สามารถย้อนกลับได้",
+          msgAutoRefresh: "ออโต้ 35วิ",
+          msgSelectAtLeastOneMonth: "กรุณาเลือกอย่างน้อย 1 เดือน",
+          optAllMonths: "ทุกเดือน (01-12)",
+          monthOpt01: "01 - ม.ค.",
+          monthOpt02: "02 - ก.พ.",
+          monthOpt03: "03 - มี.ค.",
+          monthOpt04: "04 - เม.ย.",
+          monthOpt05: "05 - พ.ค.",
+          monthOpt06: "06 - มิ.ย.",
+          monthOpt07: "07 - ก.ค.",
+          monthOpt08: "08 - ส.ค.",
+          monthOpt09: "09 - ก.ย.",
+          monthOpt10: "10 - ต.ค.",
+          monthOpt11: "11 - พ.ย.",
+          monthOpt12: "12 - ธ.ค.",
+          msgInserting: "กำลังเพิ่มข้อมูล",
+          msgRecordsCreated: "รายการถูกสร้างสำเร็จ",
+          msgRecordsToCreate: "จำนวนรายการที่จะสร้าง",
+          msgSelectedMonths: "เดือนที่เลือก",
+          msgSampleData: "ตัวอย่างข้อมูล",
+          msgSuccessfullyCreated: "สร้างข้อมูลสำเร็จ",
+          msgMonthlyRecordsCreated: "สร้างข้อมูลทุกเดือนเรียบร้อย",
+          msgSuccessCount: "สำเร็จ",
+          msgErrorCount: "ล้มเหลว",
+          
+          // Toast
+          toastSuccess: "สำเร็จ",
+          toastError: "ผิดพลาด",
+          toastInfo: "ข้อมูล",
+          msgRecordInserted: "เพิ่มข้อมูลสำเร็จ",
+          msgDataSaved: "บันทึกข้อมูลลงฐานข้อมูลแล้ว",
+          msgRecordUpdated: "อัปเดตข้อมูลสำเร็จ",
+          msgChangesSaved: "บันทึกการเปลี่ยนแปลงสำเร็จ",
+          msgRecordDeleted: "ลบข้อมูลสำเร็จ",
+          msgItemRemoved: "ลบรายการออกจากฐานข้อมูลแล้ว",
+          msgSettingsSaved: "บันทึกการตั้งค่า",
+          msgPreferencesSaved: "บันทึกการตั้งค่าของคุณแล้ว",
+          msgSettingsReset: "รีเซ็ตการตั้งค่า",
+          msgDefaultRestored: "คืนค่าเป็นค่าเริ่มต้นแล้ว",
+          msgConnectionSuccess: "ทดสอบการเชื่อมต่อ",
+          msgConnectedApi: "เชื่อมต่อ API สำเร็จ",
+          msgFailedLoad: "โหลดข้อมูลไม่สำเร็จ",
+          msgCouldNotFetch: "ไม่สามารถดึงข้อมูลได้",
+          msgConnectionError: "การเชื่อมต่อผิดพลาด",
+          msgInvalidJson: "JSON ไม่ถูกต้อง",
+          msgUpdateFailed: "อัปเดตไม่สำเร็จ",
+          msgDeleteFailed: "ลบไม่สำเร็จ",
+          msgRequestFailed: "คำขอไม่สำเร็จ",
+          
+          // Placeholders
+          placeholderSearch: "ค้นหาข้อมูล...",
+        }
+      };
 
+      let currentLang = localStorage.getItem("mockGoLanguage") || "en";
+      let autoRefreshInterval = null;
+      let countdownInterval = null;
+      const AUTO_REFRESH_DELAY = 35000; // 35 seconds
+      let countdownValue = 35;
+
+      function setLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem("mockGoLanguage", lang);
+        document.documentElement.lang = lang;
+        
+        // Update language buttons
+        document.querySelectorAll(".lang-btn").forEach(btn => {
+          btn.classList.toggle("active", btn.dataset.lang === lang);
+        });
+        
+        // Update all elements with data-i18n
+        document.querySelectorAll("[data-i18n]").forEach(el => {
+          const key = el.dataset.i18n;
+          if (translations[lang][key]) {
+            el.textContent = translations[lang][key];
+          }
+        });
+        
+        // Update placeholders
+        document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+          const key = el.dataset.i18nPlaceholder;
+          if (translations[lang][key]) {
+            el.placeholder = translations[lang][key];
+          }
+        });
+        
+        // Update page title
+        const pageTitle = document.getElementById("pageTitle");
+        if (pageTitle) {
+          const activeTab = document.querySelector(".nav-item.active");
+          if (activeTab) {
+            const tabKey = "title" + activeTab.dataset.tab.charAt(0).toUpperCase() + activeTab.dataset.tab.slice(1);
+            if (translations[lang][tabKey]) {
+              pageTitle.textContent = translations[lang][tabKey];
+            }
+          }
+        }
+      }
+
+      // ==================== Configuration ====================
+      const DEFAULT_BASE = "http://localhost:8080";
+      let baseUrl = localStorage.getItem("mockGoBaseUrl") || DEFAULT_BASE;
+      let currentData = [];
+      let filteredData = [];
+      let manageView = "table";
+      let currentPage = 1;
+      const ITEMS_PER_PAGE = 10;
+
+      // ==================== Sample Data ====================
       const samples = {
         insert: {
           code: 0,
@@ -322,262 +2521,1061 @@
             year: "2026",
           },
         },
-        update: {
-          filter: {
-            "data.web": "WEB1",
-            "data.month": "01",
-            "data.year": "2026",
-          },
-          update: {
-            "data.currency": "THB",
-          },
-          upsert: false,
-        },
-        delete: {
-          filter: {
-            "data.web": "WEB1",
-            "data.month": "01",
-            "data.year": "2026",
-          },
-        },
       };
 
-      const textareas = {
-        insert: document.getElementById("insertBody"),
-        update: document.getElementById("updateBody"),
-        delete: document.getElementById("deleteBody"),
-      };
-
-      function loadSamples() {
-        textareas.insert.value = JSON.stringify(samples.insert, null, 2);
-        textareas.update.value = JSON.stringify(samples.update, null, 2);
-        textareas.delete.value = JSON.stringify(samples.delete, null, 2);
-      }
-
-      loadSamples();
-
-      let snapshotView = "table";
-      let lastSnapshotData = null;
-
-      document.querySelectorAll("[data-view]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          snapshotView = btn.dataset.view;
-          if (lastSnapshotData) {
-            const responseEl = document.getElementById("snapshotResponse");
-            if (snapshotView === "json") {
-              renderJson(responseEl, lastSnapshotData);
-            } else {
-              renderSnapshotTable(responseEl, lastSnapshotData);
-            }
-          }
-        });
+      // ==================== Initialization ====================
+      document.addEventListener("DOMContentLoaded", () => {
+        // Load settings
+        document.getElementById("baseUrl").value = baseUrl;
+        
+        // Theme
+        const savedTheme = localStorage.getItem("theme") || "light";
+        applyTheme(savedTheme);
+        
+        // Language
+        setLanguage(currentLang);
+        
+        // Event listeners
+        setupEventListeners();
+        
+        // Initial data load - start on dashboard with auto-refresh
+        refreshDashboard();
+        startAutoRefresh("dashboard");
       });
 
-      function escapeHtml(value) {
-        return String(value)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;");
+      function setupEventListeners() {
+        // Language toggle
+        document.querySelectorAll(".lang-btn").forEach(btn => {
+          btn.addEventListener("click", () => setLanguage(btn.dataset.lang));
+        });
+
+        // Sidebar navigation
+        document.querySelectorAll(".nav-item").forEach(item => {
+          item.addEventListener("click", () => switchTab(item.dataset.tab));
+        });
+
+        // Mobile menu
+        document.getElementById("menuBtn").addEventListener("click", toggleSidebar);
+        document.getElementById("sidebarBackdrop").addEventListener("click", closeSidebar);
+
+        // Theme toggle
+        document.getElementById("themeToggle").addEventListener("click", toggleTheme);
+        document.getElementById("themeLight").addEventListener("click", () => applyTheme("light"));
+        document.getElementById("themeDark").addEventListener("click", () => applyTheme("dark"));
+        document.getElementById("themeSystem").addEventListener("click", () => applyTheme("system"));
+
+        // Manage view toggle
+        document.querySelectorAll("[data-view]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            manageView = btn.dataset.view;
+            document.querySelectorAll("[data-view]").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            document.getElementById("manageTableView").style.display = manageView === "table" ? "block" : "none";
+            document.getElementById("manageJsonView").style.display = manageView === "json" ? "block" : "none";
+            if (manageView === "json") {
+              renderManageJson();
+            }
+          });
+        });
+
+        // Search
+        document.getElementById("manageSearch").addEventListener("input", debounce(filterManageData, 300));
+        document.getElementById("manageFilterField").addEventListener("change", filterManageData);
+
+        // Forms
+        document.getElementById("queryForm").addEventListener("submit", handleQuery);
+        document.getElementById("insertForm").addEventListener("submit", handleInsert);
+        document.getElementById("insertJsonForm").addEventListener("submit", handleInsert);
+        
+        // Insert form - update JSON preview on input
+        document.querySelectorAll("#insertForm input, #insertForm select").forEach(input => {
+          input.addEventListener("input", updateInsertJsonPreview);
+        });
+        
+        // Edit form - update JSON preview on input
+        document.querySelectorAll("#editForm input:not([type='hidden']), #editForm select").forEach(input => {
+          input.addEventListener("input", updateEditJsonPreview);
+        });
+
+        // Close modals on overlay click
+        document.querySelectorAll(".modal-overlay").forEach(overlay => {
+          overlay.addEventListener("click", (e) => {
+            if (e.target === overlay) overlay.classList.remove("active");
+          });
+        });
       }
 
-      function highlightJson(jsonText) {
-        return escapeHtml(jsonText).replace(
-          /(\"(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\\"])*\"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)/g,
+      // ==================== Navigation ====================
+      const tabTitles = {
+        dashboard: "titleDashboard",
+        query: "titleQueryData",
+        insert: "titleInsertRecord",
+        manage: "titleManageData",
+        settings: "titleSettings",
+      };
+
+      function switchTab(tab) {
+        // Update sidebar
+        document.querySelectorAll(".nav-item").forEach(item => {
+          item.classList.toggle("active", item.dataset.tab === tab);
+        });
+
+        // Update panel
+        document.querySelectorAll(".tab-panel").forEach(panel => {
+          panel.classList.remove("active");
+        });
+        document.getElementById(tab + "Panel").classList.add("active");
+
+        // Update title
+        const titleKey = tabTitles[tab];
+        document.getElementById("pageTitle").textContent = translations[currentLang][titleKey] || tab;
+
+        // Close mobile sidebar
+        closeSidebar();
+
+        // Clear existing auto-refresh
+        stopAutoRefresh();
+
+        // Load data and start auto-refresh based on tab
+        if (tab === "dashboard") {
+          refreshDashboard();
+          startAutoRefresh("dashboard");
+        } else if (tab === "manage") {
+          loadAllData();
+          startAutoRefresh("manage");
+        }
+      }
+
+      function startAutoRefresh(tab) {
+        stopAutoRefresh(); // Clear any existing interval
+        
+        // Reset and start countdown
+        countdownValue = 35;
+        updateCountdownDisplay(tab);
+        
+        // Show auto-refresh indicator immediately
+        const indicator = document.getElementById(tab === "dashboard" ? "dashboardAutoRefresh" : "manageAutoRefresh");
+        if (indicator) indicator.style.display = "inline-flex";
+        
+        // Start countdown interval (update every second)
+        countdownInterval = setInterval(() => {
+          countdownValue--;
+          updateCountdownDisplay(tab);
+          
+          if (countdownValue <= 0) {
+            countdownValue = 35; // Reset for next cycle
+          }
+        }, 1000);
+        
+        // Start auto-refresh interval
+        autoRefreshInterval = setInterval(() => {
+          countdownValue = 35; // Reset countdown when refresh happens
+          if (tab === "dashboard") {
+            refreshDashboard();
+          } else if (tab === "manage") {
+            loadAllData();
+          }
+        }, AUTO_REFRESH_DELAY);
+      }
+
+      function updateCountdownDisplay(tab) {
+        const indicator = document.getElementById(tab === "dashboard" ? "dashboardAutoRefresh" : "manageAutoRefresh");
+        if (indicator) {
+          const countdownText = indicator.querySelector("span:last-child") || indicator;
+          const langText = currentLang === "th" ? `รีเฟรชใน ${countdownValue} วิ` : `Refresh in ${countdownValue}s`;
+          
+          // Keep the spinner and update only the text
+          indicator.innerHTML = `
+            <span style="display: inline-flex; align-items: center; gap: 4px;">
+              <span class="spinner" style="width: 12px; height: 12px; border-width: 1px;"></span>
+              <span>${langText}</span>
+            </span>
+          `;
+        }
+      }
+
+      function stopAutoRefresh() {
+        if (autoRefreshInterval) {
+          clearInterval(autoRefreshInterval);
+          autoRefreshInterval = null;
+        }
+        if (countdownInterval) {
+          clearInterval(countdownInterval);
+          countdownInterval = null;
+        }
+        
+        // Hide all auto-refresh indicators
+        document.getElementById("dashboardAutoRefresh").style.display = "none";
+        document.getElementById("manageAutoRefresh").style.display = "none";
+      }
+
+      function resetCountdown(tab) {
+        countdownValue = 35;
+        updateCountdownDisplay(tab);
+      }
+
+      function toggleSidebar() {
+        document.getElementById("sidebar").classList.toggle("open");
+        document.getElementById("sidebarBackdrop").classList.toggle("active");
+      }
+
+      function closeSidebar() {
+        document.getElementById("sidebar").classList.remove("open");
+        document.getElementById("sidebarBackdrop").classList.remove("active");
+      }
+
+      // ==================== Theme ====================
+      function applyTheme(theme) {
+        if (theme === "system") {
+          theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+
+        // Update buttons
+        document.querySelectorAll("#settingsPanel .tab-btn").forEach(btn => {
+          btn.classList.remove("active");
+        });
+        if (theme === "light") document.getElementById("themeLight").classList.add("active");
+        else if (theme === "dark") document.getElementById("themeDark").classList.add("active");
+        else document.getElementById("themeSystem").classList.add("active");
+      }
+
+      function toggleTheme() {
+        const current = document.documentElement.getAttribute("data-theme");
+        applyTheme(current === "dark" ? "light" : "dark");
+      }
+
+      // ==================== API Functions ====================
+      async function apiRequest(endpoint, options = {}) {
+        const url = baseUrl.replace(/\/$/, "") + endpoint;
+        try {
+          const response = await fetch(url, {
+            ...options,
+            headers: {
+              "Content-Type": "application/json",
+              ...options.headers,
+            },
+          });
+          
+          const text = await response.text();
+          let data;
+          try {
+            data = JSON.parse(text);
+          } catch {
+            data = text;
+          }
+          
+          updateConnectionStatus(response.ok);
+          return { ok: response.ok, status: response.status, data };
+        } catch (error) {
+          updateConnectionStatus(false);
+          throw error;
+        }
+      }
+
+      function updateConnectionStatus(connected) {
+        const dot = document.getElementById("statusDot");
+        const text = document.getElementById("statusText");
+        if (connected) {
+          dot.classList.remove("error");
+          text.textContent = translations[currentLang].statusConnected;
+        } else {
+          dot.classList.add("error");
+          text.textContent = translations[currentLang].statusDisconnected;
+        }
+      }
+
+      // ==================== Dashboard ====================
+      async function refreshDashboard() {
+        const btn = document.querySelector("#dashboardPanel .btn-primary");
+        btn.disabled = true;
+        btn.innerHTML = `<div class="spinner"></div> ${translations[currentLang].msgLoading}`;
+
+        try {
+          const result = await apiRequest("/api/v1/ext/snapshotAll");
+          if (result.ok) {
+            const data = Array.isArray(result.data) ? result.data : [];
+            updateDashboardStats(data);
+            renderRecentTable(data.slice(0, 5));
+            currentData = data;
+          } else {
+            showToast("error", translations[currentLang].msgFailedLoad, translations[currentLang].msgCouldNotFetch);
+          }
+        } catch (error) {
+          showToast("error", translations[currentLang].msgConnectionError, error.message);
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = `
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            ${translations[currentLang].btnRefresh}
+          `;
+          // Reset countdown when manually refreshed
+          resetCountdown("dashboard");
+        }
+      }
+
+      function updateDashboardStats(data) {
+        const users = new Set();
+        const webs = new Set();
+        const currencies = new Set();
+
+        data.forEach(item => {
+          const d = item.data || {};
+          if (d.username) users.add(d.username);
+          if (d.web) webs.add(d.web);
+          if (d.currency) currencies.add(d.currency);
+        });
+
+        document.getElementById("statTotal").textContent = data.length.toLocaleString();
+        document.getElementById("statUsers").textContent = users.size.toLocaleString();
+        document.getElementById("statWebs").textContent = webs.size.toLocaleString();
+        document.getElementById("statCurrencies").textContent = currencies.size.toLocaleString();
+      }
+
+      function renderRecentTable(data) {
+        const tbody = document.querySelector("#recentTable tbody");
+        if (data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${translations[currentLang].msgNoDataLoaded}</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = data.map(item => {
+          const d = item.data || {};
+          return `
+            <tr>
+              <td>${d.username || "-"}</td>
+              <td><span class="badge badge-blue">${d.web || "-"}</span></td>
+              <td>${d.currency || "-"}</td>
+              <td>${d.month || "-"}/${d.year || "-"}</td>
+              <td class="cell-mono">${formatNumber(d.betAmt)}</td>
+              <td class="cell-mono ${d.memberWl < 0 ? 'negative' : 'positive'}">${formatNumber(d.memberWl)}</td>
+            </tr>
+          `;
+        }).join("");
+      }
+
+      // ==================== Query ====================
+      async function handleQuery(e) {
+        e.preventDefault();
+        const responsePanel = document.getElementById("queryResponse");
+        const statusEl = document.getElementById("queryStatus");
+        const bodyEl = document.getElementById("queryResponseBody");
+
+        const payload = {
+          username: document.getElementById("qUsername").value,
+          web: document.getElementById("qWeb").value,
+          cur: document.getElementById("qCur").value,
+          month: document.getElementById("qMonth").value,
+          year: document.getElementById("qYear").value,
+        };
+
+        // Remove empty fields
+        Object.keys(payload).forEach(key => {
+          if (!payload[key]) delete payload[key];
+        });
+
+        responsePanel.style.display = "block";
+        statusEl.className = "response-status loading";
+        statusEl.innerHTML = `<div class="spinner"></div> ${translations[currentLang].msgLoading}`;
+
+        try {
+          const result = await apiRequest("/api/v1/ext/winloseEsByMonthMulti", {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
+
+          if (result.ok) {
+            statusEl.className = "response-status success";
+            statusEl.innerHTML = `
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              Success (200)
+            `;
+            bodyEl.innerHTML = highlightJson(JSON.stringify(result.data, null, 2));
+          } else {
+            statusEl.className = "response-status error";
+            statusEl.innerHTML = `
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+              Error (${result.status})
+            `;
+            bodyEl.textContent = typeof result.data === "string" ? result.data : JSON.stringify(result.data, null, 2);
+          }
+        } catch (error) {
+          statusEl.className = "response-status error";
+          statusEl.innerHTML = `
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            ${translations[currentLang].msgRequestFailed}
+          `;
+          bodyEl.textContent = error.message;
+        }
+      }
+
+      function resetQuery() {
+        document.getElementById("queryForm").reset();
+        document.getElementById("queryResponse").style.display = "none";
+      }
+
+      // ==================== Insert ====================
+      let insertMode = "form"; // "form" or "json"
+
+      function setInsertMode(mode) {
+        insertMode = mode;
+        
+        // Update button states
+        document.getElementById("insertModeForm").classList.toggle("active", mode === "form");
+        document.getElementById("insertModeJson").classList.toggle("active", mode === "json");
+        
+        // Show/hide forms
+        document.getElementById("insertForm").style.display = mode === "form" ? "block" : "none";
+        document.getElementById("insertJsonForm").style.display = mode === "json" ? "block" : "none";
+      }
+
+      function getSelectedMonths() {
+        const monthValue = document.getElementById('insertMonth').value;
+        if (monthValue === 'all') {
+          return ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+        }
+        return monthValue ? [monthValue] : [];
+      }
+
+      function buildInsertData(month = null) {
+        const prefix = document.getElementById("insertPrefix").value;
+        const selectedMonths = getSelectedMonths();
+        const useMonth = month || (selectedMonths.length > 0 ? selectedMonths[0] : "");
+        
+        return {
+          code: parseInt(document.getElementById("insertCode").value) || 0,
+          msg: document.getElementById("insertMsg").value || "SUCCESS",
+          data: {
+            username: document.getElementById("insertUsername").value,
+            web: document.getElementById("insertWeb").value,
+            currency: document.getElementById("insertCurrency").value || "THB",
+            month: useMonth,
+            year: document.getElementById("insertYear").value,
+            prefix: prefix || null,
+            betAmt: parseFloat(document.getElementById("insertBetAmt").value) || 0,
+            validAmount: parseFloat(document.getElementById("insertValidAmount").value) || 0,
+            memberWl: parseFloat(document.getElementById("insertMemberWl").value) || 0,
+            memberComm: parseFloat(document.getElementById("insertMemberComm").value) || 0,
+            memberTotal: parseFloat(document.getElementById("insertMemberTotal").value) || 0,
+          }
+        };
+      }
+
+      function updateInsertJsonPreview() {
+        const selectedMonths = getSelectedMonths();
+        const previewEl = document.getElementById("insertJsonPreview");
+        if (previewEl) {
+          if (selectedMonths.length === 0) {
+            previewEl.innerHTML = `<span style="color: var(--danger);">⚠️ ${translations[currentLang].msgSelectAtLeastOneMonth}</span>`;
+          } else if (selectedMonths.length === 1) {
+            const data = buildInsertData(selectedMonths[0]);
+            previewEl.innerHTML = highlightJson(JSON.stringify(data, null, 2));
+          } else {
+            // Show preview for multiple months
+            const sampleData = buildInsertData(selectedMonths[0]);
+            const recordsKey = translations[currentLang].msgRecordsToCreate;
+            const monthsKey = translations[currentLang].msgSelectedMonths;
+            const sampleKey = `${translations[currentLang].msgSampleData} (${selectedMonths[0]})`;
+            const preview = {};
+            preview[recordsKey] = selectedMonths.length;
+            preview[monthsKey] = selectedMonths.join(", ");
+            preview[sampleKey] = sampleData;
+            previewEl.innerHTML = highlightJson(JSON.stringify(preview, null, 2));
+          }
+        }
+      }
+
+      function loadInsertSample() {
+        if (insertMode === "json") {
+          document.getElementById("insertBody").value = JSON.stringify(samples.insert, null, 2);
+        } else {
+          // Fill form with sample data
+          const d = samples.insert.data;
+          document.getElementById("insertUsername").value = d.username || "";
+          document.getElementById("insertWeb").value = d.web || "";
+          document.getElementById("insertCurrency").value = d.currency || "THB";
+          
+          // Set month dropdown - select only the sample month
+          document.getElementById('insertMonth').value = d.month || "01";
+          
+          document.getElementById("insertYear").value = d.year || "";
+          document.getElementById("insertPrefix").value = d.prefix || "";
+          document.getElementById("insertBetAmt").value = d.betAmt ?? 0;
+          document.getElementById("insertValidAmount").value = d.validAmount ?? 0;
+          document.getElementById("insertMemberWl").value = d.memberWl ?? 0;
+          document.getElementById("insertMemberComm").value = d.memberComm ?? 0;
+          document.getElementById("insertMemberTotal").value = d.memberTotal ?? 0;
+          document.getElementById("insertCode").value = samples.insert.code ?? 0;
+          document.getElementById("insertMsg").value = samples.insert.msg || "SUCCESS";
+          updateInsertJsonPreview();
+        }
+      }
+
+      function clearInsert() {
+        if (insertMode === "json") {
+          document.getElementById("insertBody").value = "";
+        } else {
+          // Clear form
+          document.getElementById("insertUsername").value = "";
+          document.getElementById("insertWeb").value = "";
+          document.getElementById("insertCurrency").value = "THB";
+          
+          // Clear month selection
+          document.getElementById('insertMonth').value = "";
+          
+          document.getElementById("insertYear").value = "";
+          document.getElementById("insertPrefix").value = "";
+          document.getElementById("insertBetAmt").value = "0";
+          document.getElementById("insertValidAmount").value = "0";
+          document.getElementById("insertMemberWl").value = "0";
+          document.getElementById("insertMemberComm").value = "0";
+          document.getElementById("insertMemberTotal").value = "0";
+          document.getElementById("insertCode").value = "0";
+          document.getElementById("insertMsg").value = "SUCCESS";
+          updateInsertJsonPreview();
+        }
+        document.getElementById("insertResponse").style.display = "none";
+      }
+
+      async function handleInsert(e) {
+        e.preventDefault();
+        const responsePanel = document.getElementById("insertResponse");
+        const statusEl = document.getElementById("insertStatus");
+        const bodyEl = document.getElementById("insertResponseBody");
+
+        responsePanel.style.display = "block";
+        statusEl.className = "response-status loading";
+
+        if (insertMode === "json") {
+          // Single JSON insert
+          const textarea = document.getElementById("insertBody");
+          let body;
+          try {
+            body = JSON.parse(textarea.value);
+          } catch (err) {
+            showToast("error", translations[currentLang].msgInvalidJson, err.message);
+            return;
+          }
+
+          statusEl.innerHTML = `<div class="spinner"></div> ${translations[currentLang].msgProcessing}`;
+
+          try {
+            const result = await apiRequest("/api/v1/ext/insertSnapshot", {
+              method: "POST",
+              body: JSON.stringify(body),
+            });
+
+            if (result.ok) {
+              statusEl.className = "response-status success";
+              statusEl.innerHTML = `
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                ${translations[currentLang].msgRecordInserted}
+              `;
+              bodyEl.innerHTML = highlightJson(JSON.stringify(result.data, null, 2));
+              showToast("success", translations[currentLang].msgRecordInserted, translations[currentLang].msgDataSaved);
+              refreshDashboard();
+            } else {
+              statusEl.className = "response-status error";
+              statusEl.innerHTML = `
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                Insert Failed
+              `;
+              bodyEl.textContent = typeof result.data === "string" ? result.data : JSON.stringify(result.data, null, 2);
+            }
+          } catch (error) {
+            statusEl.className = "response-status error";
+            statusEl.innerHTML = `
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+              ${translations[currentLang].msgRequestFailed}
+            `;
+            bodyEl.textContent = error.message;
+          }
+        } else {
+          // Form mode - insert multiple records for each selected month
+          const selectedMonths = getSelectedMonths();
+          
+          if (selectedMonths.length === 0) {
+            statusEl.className = "response-status error";
+            statusEl.innerHTML = `
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+              ${translations[currentLang].msgSelectAtLeastOneMonth}
+            `;
+            return;
+          }
+
+          const results = [];
+          const errors = [];
+          
+          for (let i = 0; i < selectedMonths.length; i++) {
+            const month = selectedMonths[i];
+            statusEl.innerHTML = `<div class="spinner"></div> ${translations[currentLang].msgInserting} ${i + 1}/${selectedMonths.length} (month: ${month})...`;
+            
+            try {
+              const body = buildInsertData(month);
+              const result = await apiRequest("/api/v1/ext/insertSnapshot", {
+                method: "POST",
+                body: JSON.stringify(body),
+              });
+              
+              if (result.ok) {
+                results.push({ month, success: true, data: result.data });
+              } else {
+                errors.push({ month, error: result.data });
+              }
+            } catch (error) {
+              errors.push({ month, error: error.message });
+            }
+          }
+
+          // Show final result
+          if (errors.length === 0) {
+            statusEl.className = "response-status success";
+            statusEl.innerHTML = `
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              ${translations[currentLang].msgSuccessfullyCreated} ${results.length} ${translations[currentLang].msgRecordsCreated}
+            `;
+            bodyEl.innerHTML = highlightJson(JSON.stringify({ 
+              success: true, 
+              total: results.length,
+              months: selectedMonths,
+              results: results 
+            }, null, 2));
+            showToast("success", translations[currentLang].msgRecordInserted, 
+              translations[currentLang].msgMonthlyRecordsCreated);
+            refreshDashboard();
+          } else {
+            statusEl.className = "response-status error";
+            statusEl.innerHTML = `
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+              ${translations[currentLang].msgSuccessCount}: ${results.length}, ${translations[currentLang].msgErrorCount}: ${errors.length}
+            `;
+            bodyEl.innerHTML = highlightJson(JSON.stringify({ 
+              success: errors.length === 0,
+              successCount: results.length,
+              errorCount: errors.length,
+              results: results,
+              errors: errors
+            }, null, 2));
+          }
+        }
+      }
+
+      // ==================== Manage ====================
+      async function loadAllData() {
+        const btn = document.querySelector("#managePanel .btn-primary");
+        btn.disabled = true;
+        btn.innerHTML = `<div class="spinner"></div>`;
+
+        try {
+          const result = await apiRequest("/api/v1/ext/snapshotAll");
+          if (result.ok) {
+            currentData = Array.isArray(result.data) ? result.data : [];
+            filterManageData();
+            showToast("success", translations[currentLang].toastSuccess, `${currentData.length} records found`);
+          } else {
+            showToast("error", translations[currentLang].msgFailedLoad, translations[currentLang].msgCouldNotFetch);
+          }
+        } catch (error) {
+          showToast("error", translations[currentLang].msgConnectionError, error.message);
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = `
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            ${translations[currentLang].btnRefresh}
+          `;
+          // Reset countdown when manually refreshed
+          resetCountdown("manage");
+        }
+      }
+
+      function filterManageData() {
+        const search = document.getElementById("manageSearch").value.toLowerCase();
+        const field = document.getElementById("manageFilterField").value;
+
+        filteredData = currentData.filter(item => {
+          const d = item.data || {};
+          if (!search) return true;
+          
+          if (field === "all") {
+            return Object.values(d).some(v => String(v).toLowerCase().includes(search));
+          }
+          return String(d[field] || "").toLowerCase().includes(search);
+        });
+
+        currentPage = 1;
+        renderManageTable();
+        if (manageView === "json") renderManageJson();
+      }
+
+      function renderManageTable() {
+        const tbody = document.querySelector("#manageTable tbody");
+        const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        const pageData = filteredData.slice(start, start + ITEMS_PER_PAGE);
+
+        if (pageData.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="9" class="empty-state">
+                <div class="empty-icon">📭</div>
+                <div class="empty-title">${translations[currentLang].msgNoDataLoaded}</div>
+                <div>${translations[currentLang].msgClickRefreshData}</div>
+              </td>
+            </tr>
+          `;
+        } else {
+          tbody.innerHTML = pageData.map((item, idx) => {
+            const d = item.data || {};
+            const realIndex = start + idx;
+            return `
+              <tr>
+                <td>
+                  <div class="btn-group">
+                    <button class="btn btn-sm btn-secondary" onclick="openEditModal(${realIndex})" title="Edit">
+                      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                      </svg>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="openDeleteModal(${realIndex})" title="Delete">
+                      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+                <td>${d.username || "-"}</td>
+                <td><span class="badge badge-blue">${d.web || "-"}</span></td>
+                <td>${d.currency || "-"}</td>
+                <td>${d.month || "-"}/${d.year || "-"}</td>
+                <td class="cell-mono">${formatNumber(d.betAmt)}</td>
+                <td class="cell-mono">${formatNumber(d.validAmount)}</td>
+                <td class="cell-mono" style="color: ${d.memberWl < 0 ? 'var(--danger)' : 'var(--success)'}">${formatNumber(d.memberWl)}</td>
+                <td class="cell-mono">${formatNumber(d.memberTotal)}</td>
+              </tr>
+            `;
+          }).join("");
+        }
+
+        renderPagination(totalPages);
+      }
+
+      function renderPagination(totalPages) {
+        const container = document.getElementById("managePagination");
+        if (totalPages <= 1) {
+          container.innerHTML = "";
+          return;
+        }
+
+        let html = `
+          <button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? "disabled" : ""}>←</button>
+        `;
+
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            html += `<button class="page-btn ${i === currentPage ? "active" : ""}" onclick="goToPage(${i})">${i}</button>`;
+          } else if (i === currentPage - 2 || i === currentPage + 2) {
+            html += `<span style="color: var(--text-muted);">...</span>`;
+          }
+        }
+
+        html += `
+          <button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? "disabled" : ""}>→</button>
+        `;
+
+        container.innerHTML = html;
+      }
+
+      function goToPage(page) {
+        currentPage = page;
+        renderManageTable();
+      }
+
+      function renderManageJson() {
+        const bodyEl = document.getElementById("manageJsonBody");
+        bodyEl.innerHTML = highlightJson(JSON.stringify(filteredData, null, 2));
+      }
+
+      // ==================== Edit Modal ====================
+      let currentEditIndex = null;
+
+      function openEditModal(index) {
+        currentEditIndex = index;
+        const item = filteredData[index];
+        const d = item.data || {};
+        
+        // Store original values for filter
+        document.getElementById("editOriginalUsername").value = d.username || "";
+        document.getElementById("editOriginalWeb").value = d.web || "";
+        document.getElementById("editOriginalMonth").value = d.month || "";
+        document.getElementById("editOriginalYear").value = d.year || "";
+        document.getElementById("editRecordId").value = item._id?.$oid || item._id || "";
+        
+        // Fill form fields with current values
+        document.getElementById("editUsername").value = d.username || "";
+        document.getElementById("editWeb").value = d.web || "";
+        document.getElementById("editCurrency").value = d.currency || "";
+        document.getElementById("editMonth").value = d.month || "";
+        document.getElementById("editYear").value = d.year || "";
+        document.getElementById("editPrefix").value = d.prefix || "";
+        document.getElementById("editBetAmt").value = d.betAmt ?? "";
+        document.getElementById("editValidAmount").value = d.validAmount ?? "";
+        document.getElementById("editMemberWl").value = d.memberWl ?? "";
+        document.getElementById("editMemberComm").value = d.memberComm ?? "";
+        document.getElementById("editMemberTotal").value = d.memberTotal ?? "";
+        document.getElementById("editCode").value = item.code ?? 0;
+        document.getElementById("editMsg").value = item.msg || "SUCCESS";
+        document.getElementById("editUpsert").checked = false;
+        
+        // Update JSON preview
+        updateEditJsonPreview();
+        
+        document.getElementById("editModal").classList.add("active");
+      }
+
+      function updateEditJsonPreview() {
+        const originalFilter = {
+          "data.username": document.getElementById("editOriginalUsername").value,
+          "data.web": document.getElementById("editOriginalWeb").value,
+          "data.month": document.getElementById("editOriginalMonth").value,
+          "data.year": document.getElementById("editOriginalYear").value
+        };
+        
+        // Remove empty values from filter
+        Object.keys(originalFilter).forEach(key => {
+          if (!originalFilter[key]) delete originalFilter[key];
+        });
+        
+        const updateData = buildUpdateData();
+        
+        document.getElementById("editFilter").value = JSON.stringify(originalFilter, null, 2);
+        document.getElementById("editUpdate").value = JSON.stringify(updateData, null, 2);
+      }
+
+      function buildUpdateData() {
+        const prefix = document.getElementById("editPrefix").value;
+        
+        return {
+          code: parseInt(document.getElementById("editCode").value) || 0,
+          msg: document.getElementById("editMsg").value || "SUCCESS",
+          data: {
+            username: document.getElementById("editUsername").value,
+            web: document.getElementById("editWeb").value,
+            currency: document.getElementById("editCurrency").value,
+            month: document.getElementById("editMonth").value,
+            year: document.getElementById("editYear").value,
+            prefix: prefix || null,
+            betAmt: parseFloat(document.getElementById("editBetAmt").value) || 0,
+            validAmount: parseFloat(document.getElementById("editValidAmount").value) || 0,
+            memberWl: parseFloat(document.getElementById("editMemberWl").value) || 0,
+            memberComm: parseFloat(document.getElementById("editMemberComm").value) || 0,
+            memberTotal: parseFloat(document.getElementById("editMemberTotal").value) || 0,
+          }
+        };
+      }
+
+      // Update JSON preview when any input changes
+      document.querySelectorAll("#editForm input, #editForm select").forEach(input => {
+        input.addEventListener("input", updateEditJsonPreview);
+      });
+
+      function closeEditModal() {
+        document.getElementById("editModal").classList.remove("active");
+        currentEditIndex = null;
+      }
+
+      async function submitEdit() {
+        const recordId = document.getElementById("editRecordId").value;
+        
+        // Build filter - use _id if available, otherwise use original data fields
+        let filter = {};
+        if (recordId) {
+          filter = { "_id": { "$oid": recordId } };
+        } else {
+          filter = {
+            "data.username": document.getElementById("editOriginalUsername").value,
+            "data.web": document.getElementById("editOriginalWeb").value,
+            "data.month": document.getElementById("editOriginalMonth").value,
+            "data.year": document.getElementById("editOriginalYear").value
+          };
+          // Remove empty values
+          Object.keys(filter).forEach(key => {
+            if (!filter[key]) delete filter[key];
+          });
+        }
+        
+        const update = buildUpdateData();
+        const upsert = document.getElementById("editUpsert").checked;
+
+        try {
+          const result = await apiRequest("/api/v1/ext/updateSnapshot", {
+            method: "POST",
+            body: JSON.stringify({ filter, update, upsert }),
+          });
+
+          if (result.ok) {
+            showToast("success", translations[currentLang].msgRecordUpdated, translations[currentLang].msgChangesSaved);
+            closeEditModal();
+            loadAllData();
+          } else {
+            showToast("error", translations[currentLang].msgUpdateFailed, typeof result.data === "string" ? result.data : "Unknown error");
+          }
+        } catch (error) {
+          showToast("error", translations[currentLang].msgRequestFailed, error.message);
+        }
+      }
+
+      // ==================== Delete Modal ====================
+      let deleteIndex = null;
+
+      function openDeleteModal(index) {
+        deleteIndex = index;
+        const item = filteredData[index];
+        const filter = { "data.username": item.data?.username, "data.web": item.data?.web, "data.month": item.data?.month, "data.year": item.data?.year };
+        
+        document.getElementById("deleteFilter").value = JSON.stringify(filter, null, 2);
+        document.getElementById("deleteModal").classList.add("active");
+      }
+
+      function closeDeleteModal() {
+        document.getElementById("deleteModal").classList.remove("active");
+        deleteIndex = null;
+      }
+
+      async function submitDelete() {
+        let filter;
+        try {
+          filter = JSON.parse(document.getElementById("deleteFilter").value);
+        } catch (err) {
+          showToast("error", translations[currentLang].msgInvalidJson, err.message);
+          return;
+        }
+
+        try {
+          const result = await apiRequest("/api/v1/ext/deleteSnapshot", {
+            method: "POST",
+            body: JSON.stringify({ filter }),
+          });
+
+          if (result.ok) {
+            showToast("success", translations[currentLang].msgRecordDeleted, translations[currentLang].msgItemRemoved);
+            closeDeleteModal();
+            loadAllData();
+          } else {
+            showToast("error", translations[currentLang].msgDeleteFailed, typeof result.data === "string" ? result.data : "Unknown error");
+          }
+        } catch (error) {
+          showToast("error", translations[currentLang].msgRequestFailed, error.message);
+        }
+      }
+
+      // ==================== Settings ====================
+      function saveSettings() {
+        baseUrl = document.getElementById("baseUrl").value || DEFAULT_BASE;
+        localStorage.setItem("mockGoBaseUrl", baseUrl);
+        showToast("success", translations[currentLang].msgSettingsSaved, translations[currentLang].msgPreferencesSaved);
+        
+        // Test connection
+        apiRequest("/api/v1/ext/snapshotAll").then(result => {
+          if (result.ok) {
+            showToast("success", translations[currentLang].msgConnectionSuccess, translations[currentLang].msgConnectedApi);
+          }
+        });
+      }
+
+      function resetSettings() {
+        document.getElementById("baseUrl").value = DEFAULT_BASE;
+        applyTheme("light");
+        showToast("info", translations[currentLang].msgSettingsReset, translations[currentLang].msgDefaultRestored);
+      }
+
+      // ==================== Utilities ====================
+      function showToast(type, title, message) {
+        const container = document.getElementById("toastContainer");
+        const toast = document.createElement("div");
+        toast.className = `toast toast-${type}`;
+        
+        const icon = type === "success" ? "✓" : type === "error" ? "✕" : "ℹ";
+        
+        toast.innerHTML = `
+          <div class="toast-icon">${icon}</div>
+          <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+          </div>
+          <button class="toast-close" onclick="this.parentElement.remove()">✕</button>
+        `;
+        
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 5000);
+      }
+
+      function highlightJson(json) {
+        return escapeHtml(json).replace(
+          /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)/g,
           (match) => {
-            if (/^\"/.test(match)) {
+            if (/^"/.test(match)) {
               return /:$/.test(match)
                 ? `<span class="json-key">${match}</span>`
                 : `<span class="json-string">${match}</span>`;
             }
-            if (/true|false/.test(match)) {
-              return `<span class="json-boolean">${match}</span>`;
-            }
-            if (/null/.test(match)) {
-              return `<span class="json-null">${match}</span>`;
-            }
+            if (/true|false/.test(match)) return `<span class="json-boolean">${match}</span>`;
+            if (/null/.test(match)) return `<span class="json-null">${match}</span>`;
             return `<span class="json-number">${match}</span>`;
           }
         );
       }
 
-      function renderJson(responseEl, data) {
-        const pretty = JSON.stringify(data, null, 2);
-        responseEl.innerHTML = `<pre>${highlightJson(pretty)}</pre>`;
+      function escapeHtml(text) {
+        return String(text)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
       }
 
-      function renderSnapshotTable(responseEl, data) {
-        const items = Array.isArray(data) ? data : [data];
-        const columns = [
-          "_id",
-          "code",
-          "msg",
-          "username",
-          "currency",
-          "betAmt",
-          "validAmount",
-          "memberWl",
-          "memberComm",
-          "memberTotal",
-          "web",
-          "month",
-          "year",
-        ];
-        const rows = items
-          .filter((item) => item && typeof item === "object")
-          .map((item) => {
-            const payload = item.data && typeof item.data === "object" ? item.data : {};
-            return {
-              _id: item._id ? item._id : "-",
-              code: item.code ?? "-",
-              msg: item.msg ? item.msg : "-",
-              username: payload.username ? payload.username : "-",
-              currency: payload.currency ? payload.currency : "-",
-              betAmt: payload.betAmt ?? "-",
-              validAmount: payload.validAmount ?? "-",
-              memberWl: payload.memberWl ?? "-",
-              memberComm: payload.memberComm ?? "-",
-              memberTotal: payload.memberTotal ?? "-",
-              web: payload.web ? payload.web : "-",
-              month: payload.month ? payload.month : "-",
-              year: payload.year ? payload.year : "-",
-            };
-          })
-          .map(
-            (row) =>
-              `<tr>${columns
-                .map((col) => `<td>${escapeHtml(row[col])}</td>`)
-                .join("")}</tr>`
-          )
-          .join("");
-        const table = `
-          <table>
-            <thead>
-              <tr>${columns.map((col) => `<th>${col}</th>`).join("")}</tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        `;
-        responseEl.innerHTML = table;
+      function formatNumber(num) {
+        if (num === null || num === undefined) return "-";
+        return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       }
 
-      document.querySelectorAll("[data-reset]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          loadSamples();
+      function copyResponse(type) {
+        const el = document.getElementById(type + "ResponseBody");
+        const text = el.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          showToast("success", translations[currentLang].toastSuccess, translations[currentLang].btnCopyJson);
         });
-      });
-
-      async function runRequest({
-        endpoint,
-        method = "POST",
-        body,
-        statusEl,
-        responseEl,
-      }) {
-        statusEl.textContent = "Loading...";
-        responseEl.textContent = "";
-
-        try {
-          const base = baseInput.value.trim() || DEFAULT_BASE;
-          const url = `${base}${endpoint}`;
-          const options = { method, headers: {} };
-          if (body) {
-            options.headers["Content-Type"] = "application/json";
-            options.body = JSON.stringify(body);
-          }
-
-          const res = await fetch(url, options);
-          const text = await res.text();
-          let parsed = text;
-          try {
-            parsed = JSON.parse(text);
-          } catch (err) {
-            // Keep raw text for non-JSON responses.
-          }
-
-          statusEl.textContent = `Status: ${res.status} ${res.statusText}`;
-          if (endpoint === "/api/v1/ext/snapshotAll") {
-            lastSnapshotData = parsed;
-            if (snapshotView === "json") {
-              renderJson(responseEl, parsed);
-            } else {
-              renderSnapshotTable(responseEl, parsed);
-            }
-          } else if (typeof parsed === "string") {
-            responseEl.textContent = parsed;
-          } else {
-            renderJson(responseEl, parsed);
-          }
-        } catch (err) {
-          statusEl.textContent = "Request failed.";
-          responseEl.textContent = err.message || String(err);
-        }
       }
 
-      document.getElementById("loadSnapshot").addEventListener("click", () => {
-        runRequest({
-          endpoint: "/api/v1/ext/snapshotAll",
-          method: "GET",
-          statusEl: document.getElementById("snapshotStatus"),
-          responseEl: document.getElementById("snapshotResponse"),
-        });
-      });
-
-      document.getElementById("insertForm").addEventListener("submit", (event) => {
-        event.preventDefault();
-        let body;
-        try {
-          body = JSON.parse(textareas.insert.value);
-        } catch (err) {
-          document.getElementById("insertStatus").textContent = "Invalid JSON.";
-          document.getElementById("insertResponse").textContent =
-            err.message || String(err);
-          return;
-        }
-        runRequest({
-          endpoint: "/api/v1/ext/insertSnapshot",
-          body,
-          statusEl: document.getElementById("insertStatus"),
-          responseEl: document.getElementById("insertResponse"),
-        });
-      });
-
-      document.getElementById("updateForm").addEventListener("submit", (event) => {
-        event.preventDefault();
-        let body;
-        try {
-          body = JSON.parse(textareas.update.value);
-        } catch (err) {
-          document.getElementById("updateStatus").textContent = "Invalid JSON.";
-          document.getElementById("updateResponse").textContent =
-            err.message || String(err);
-          return;
-        }
-        runRequest({
-          endpoint: "/api/v1/ext/updateSnapshot",
-          body,
-          statusEl: document.getElementById("updateStatus"),
-          responseEl: document.getElementById("updateResponse"),
-        });
-      });
-
-      document.getElementById("deleteForm").addEventListener("submit", (event) => {
-        event.preventDefault();
-        let body;
-        try {
-          body = JSON.parse(textareas.delete.value);
-        } catch (err) {
-          document.getElementById("deleteStatus").textContent = "Invalid JSON.";
-          document.getElementById("deleteResponse").textContent =
-            err.message || String(err);
-          return;
-        }
-        runRequest({
-          endpoint: "/api/v1/ext/deleteSnapshot",
-          body,
-          statusEl: document.getElementById("deleteStatus"),
-          responseEl: document.getElementById("deleteResponse"),
-        });
-      });
+      function debounce(fn, delay) {
+        let timeout;
+        return (...args) => {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => fn(...args), delay);
+        };
+      }
     </script>
   </body>
 </html>
+
