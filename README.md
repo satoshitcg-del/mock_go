@@ -110,6 +110,14 @@ Endpoints
 }
 ```
 
+**Response body (Suspended = true, HTTP 200):**
+```json
+{
+  "code": 403,
+  "msg": "Permission denied."
+}
+```
+
 ### 2) GET `/api/v1/ext/snapshotAll`
 ดึงข้อมูลทั้งหมดใน collection
 

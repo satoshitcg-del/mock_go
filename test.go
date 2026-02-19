@@ -65,6 +65,40 @@ type Snapshot struct {
 	Data       []SnapshotItem `bson:"data"`
 }
 
+type snapshotCandidate struct {
+	item       SnapshotItem
+	suspended  bool
+	hasSuspend bool
+}
+
+func getSuspendedFlag(m map[string]interface{}) (bool, bool) {
+	for k, v := range m {
+		key := strings.ToLower(strings.TrimSpace(k))
+		if key != "suspended" {
+			continue
+		}
+		switch val := v.(type) {
+		case bool:
+			return val, true
+		case string:
+			lv := strings.ToLower(strings.TrimSpace(val))
+			if lv == "true" || lv == "1" || lv == "yes" {
+				return true, true
+			}
+			if lv == "false" || lv == "0" || lv == "no" {
+				return false, true
+			}
+		case int32:
+			return val != 0, true
+		case int64:
+			return val != 0, true
+		case float64:
+			return val != 0, true
+		}
+	}
+	return false, false
+}
+
 var (
 	mongoOnce   sync.Once
 	mongoClient *mongo.Client
@@ -246,19 +280,22 @@ func winloseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var items []SnapshotItem
+	var candidates []snapshotCandidate
 	switch v := rawData.(type) {
 	case bson.M:
 		var item SnapshotItem
 		if dataBytes, err := bson.Marshal(v); err == nil {
 			_ = bson.Unmarshal(dataBytes, &item)
-			items = append(items, item)
+			asMap := map[string]interface{}(v)
+			suspended, hasSuspend := getSuspendedFlag(asMap)
+			candidates = append(candidates, snapshotCandidate{item: item, suspended: suspended, hasSuspend: hasSuspend})
 		}
 	case map[string]interface{}:
 		var item SnapshotItem
 		if dataBytes, err := bson.Marshal(v); err == nil {
 			_ = bson.Unmarshal(dataBytes, &item)
-			items = append(items, item)
+			suspended, hasSuspend := getSuspendedFlag(v)
+			candidates = append(candidates, snapshotCandidate{item: item, suspended: suspended, hasSuspend: hasSuspend})
 		}
 	case []interface{}:
 		for _, entry := range v {
@@ -273,33 +310,44 @@ func winloseHandler(w http.ResponseWriter, r *http.Request) {
 			var item SnapshotItem
 			if dataBytes, err := bson.Marshal(asMap); err == nil {
 				_ = bson.Unmarshal(dataBytes, &item)
-				items = append(items, item)
+				suspended, hasSuspend := getSuspendedFlag(asMap)
+				candidates = append(candidates, snapshotCandidate{item: item, suspended: suspended, hasSuspend: hasSuspend})
 			}
 		}
 	}
 
-	if len(items) == 0 {
+	if len(candidates) == 0 {
 		http.Error(w, "Record not found", http.StatusNotFound)
 		return
 	}
 
-	var item *SnapshotItem
-	for i := range items {
-		candidate := &items[i]
-		if req.Username != "" && candidate.Username != req.Username {
+	var selected *snapshotCandidate
+	for i := range candidates {
+		candidate := &candidates[i]
+		if req.Username != "" && candidate.item.Username != req.Username {
 			continue
 		}
-		if req.Cur != "" && candidate.Currency != req.Cur {
+		if req.Cur != "" && candidate.item.Currency != req.Cur {
 			continue
 		}
-		if req.Web != "" && candidate.Web != "" && candidate.Web != req.Web {
+		if req.Web != "" && candidate.item.Web != "" && candidate.item.Web != req.Web {
 			continue
 		}
-		item = candidate
+		selected = candidate
 		break
 	}
-	if item == nil {
-		item = &items[0]
+	if selected == nil {
+		selected = &candidates[0]
+	}
+
+	if selected.hasSuspend && selected.suspended {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(bson.M{
+			"code": 403,
+			"msg":  "Permission denied.",
+		})
+		return
 	}
 
 	// 3. เตรียมข้อมูล Response (Mock Data จาก Log ของคุณ)
@@ -307,14 +355,14 @@ func winloseHandler(w http.ResponseWriter, r *http.Request) {
 		Code: 0,
 		Msg:  "SUCCESS",
 		Data: ResponseData{
-			Username:    item.Username,
-			Prefix:      item.Prefix,
-			Currency:    item.Currency,
-			BetAmt:      item.BetAmt,
-			ValidAmount: item.ValidAmount,
-			MemberWl:    item.MemberWl,
-			MemberComm:  item.MemberComm,
-			MemberTotal: item.MemberTotal,
+			Username:    selected.item.Username,
+			Prefix:      selected.item.Prefix,
+			Currency:    selected.item.Currency,
+			BetAmt:      selected.item.BetAmt,
+			ValidAmount: selected.item.ValidAmount,
+			MemberWl:    selected.item.MemberWl,
+			MemberComm:  selected.item.MemberComm,
+			MemberTotal: selected.item.MemberTotal,
 		},
 	}
 
