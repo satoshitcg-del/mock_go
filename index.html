@@ -970,19 +970,6 @@
         color: var(--text-muted);
       }
 
-      .empty-icon {
-        width: 72px;
-        height: 72px;
-        margin: 0 auto 20px;
-        background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-hover) 100%);
-        border-radius: var(--radius-lg);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        box-shadow: var(--shadow-sm);
-      }
-
       .empty-title {
         font-size: 1.1rem;
         font-weight: 600;
@@ -1866,7 +1853,6 @@
                       <tbody>
                         <tr>
                           <td colspan="9" class="empty-state">
-                            <div class="empty-icon">📊</div>
                             <div class="empty-title" data-i18n="msgNoDataLoaded">No data loaded</div>
                             <div data-i18n="msgClickRefreshData">Click refresh to load data from the server</div>
                           </td>
@@ -3315,7 +3301,6 @@
           tbody.innerHTML = `
             <tr>
               <td colspan="9" class="empty-state">
-                <div class="empty-icon">📭</div>
                 <div class="empty-title">${translations[currentLang].msgNoDataLoaded}</div>
                 <div>${translations[currentLang].msgClickRefreshData}</div>
               </td>
