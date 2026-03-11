@@ -1674,6 +1674,8 @@
                   <span data-i18n="titleInsertRecord">Insert New Record</span>
                 </div>
                 <div class="btn-group">
+                  <button class="btn btn-sm btn-secondary" onclick="loadTiamutSample()" data-i18n="btnLoadTiamut">Tiamut</button>
+                  <button class="btn btn-sm btn-secondary" onclick="loadSBv2Sample()" data-i18n="btnLoadSBv2">SBv2</button>
                   <button class="btn btn-sm btn-secondary" onclick="loadInsertSample()" data-i18n="btnLoadSample">Load Sample</button>
                   <button class="btn btn-sm btn-secondary" onclick="clearInsert()" data-i18n="btnClear">Clear</button>
                 </div>
@@ -1943,7 +1945,7 @@
                 <div class="settings-form">
                   <div class="form-group">
                     <label for="baseUrl" data-i18n="labelApiBaseUrl">API Base URL</label>
-                    <input type="text" id="baseUrl" placeholder="http://localhost:8080" />
+                    <input type="text" id="baseUrl" placeholder="https://mock-go.onrender.com" />
                   </div>
                   <div class="form-group">
                     <label data-i18n="labelTheme">Theme</label>
@@ -2198,6 +2200,8 @@
           btnSearch: "Search",
           btnReset: "Reset",
           btnLoadSample: "Load Sample",
+          btnLoadTiamut: "Tiamut",
+          btnLoadSBv2: "SBv2",
           btnClear: "Clear",
           btnSelectAll: "Select All",
           btnClearAll: "Clear All",
@@ -2365,6 +2369,8 @@
           btnSearch: "ค้นหา",
           btnReset: "รีเซ็ต",
           btnLoadSample: "โหลดตัวอย่าง",
+          btnLoadTiamut: "Tiamut",
+          btnLoadSBv2: "SBv2",
           btnClear: "ล้าง",
           btnSelectAll: "เลือกทั้งหมด",
           btnClearAll: "ล้างทั้งหมด",
@@ -2508,7 +2514,7 @@
       }
 
       // ==================== Configuration ====================
-      const DEFAULT_BASE = "http://localhost:8080";
+      const DEFAULT_BASE = "https://mock-go.onrender.com";
       let baseUrl = localStorage.getItem("mockGoBaseUrl") || DEFAULT_BASE;
       let currentData = [];
       let filteredData = [];
@@ -3017,10 +3023,10 @@
           document.getElementById("insertUsername").value = d.username || "";
           document.getElementById("insertWeb").value = d.web || "";
           document.getElementById("insertCurrency").value = d.currency || "THB";
-          
+
           // Set month dropdown - select only the sample month
           document.getElementById('insertMonth').value = d.month || "01";
-          
+
           document.getElementById("insertYear").value = d.year || "";
           document.getElementById("insertPrefix").value = d.prefix || "";
           document.getElementById("insertBetAmt").value = d.betAmt ?? 0;
@@ -3030,6 +3036,84 @@
           document.getElementById("insertMemberTotal").value = d.memberTotal ?? 0;
           document.getElementById("insertCode").value = samples.insert.code ?? 0;
           document.getElementById("insertMsg").value = samples.insert.msg || "SUCCESS";
+          updateInsertJsonPreview();
+        }
+      }
+
+      function loadTiamutSample() {
+        const tiamutData = {
+          username: "mala",
+          web: "ambking",
+          currency: "THB",
+          month: "01",
+          year: "2026",
+          prefix: null,
+          betAmt: 0,
+          validAmount: 0,
+          memberWl: 0,
+          memberComm: 0,
+          memberTotal: 0,
+        };
+        if (insertMode === "json") {
+          const jsonData = {
+            code: 0,
+            msg: "SUCCESS",
+            data: tiamutData
+          };
+          document.getElementById("insertBody").value = JSON.stringify(jsonData, null, 2);
+        } else {
+          document.getElementById("insertUsername").value = tiamutData.username;
+          document.getElementById("insertWeb").value = tiamutData.web;
+          document.getElementById("insertCurrency").value = tiamutData.currency;
+          document.getElementById('insertMonth').value = tiamutData.month;
+          document.getElementById("insertYear").value = tiamutData.year;
+          document.getElementById("insertPrefix").value = "";
+          document.getElementById("insertBetAmt").value = 0;
+          document.getElementById("insertValidAmount").value = 0;
+          document.getElementById("insertMemberWl").value = 0;
+          document.getElementById("insertMemberComm").value = 0;
+          document.getElementById("insertMemberTotal").value = 0;
+          document.getElementById("insertCode").value = 0;
+          document.getElementById("insertMsg").value = "SUCCESS";
+          updateInsertJsonPreview();
+        }
+      }
+
+      function loadSBv2Sample() {
+        const sbv2Data = {
+          username: "superadmin",
+          web: "13kclub",
+          currency: "THB",
+          month: "01",
+          year: "2026",
+          prefix: null,
+          betAmt: 0,
+          validAmount: 0,
+          memberWl: 0,
+          memberComm: 0,
+          memberTotal: 0,
+        };
+        if (insertMode === "json") {
+          const jsonData = {
+            code: 0,
+            msg: "SUCCESS",
+            data: sbv2Data
+          };
+          document.getElementById("insertBody").value = JSON.stringify(jsonData, null, 2);
+        } else {
+          document.getElementById("insertUsername").value = sbv2Data.username;
+          document.getElementById("insertWeb").value = sbv2Data.web;
+          document.getElementById("insertCurrency").value = sbv2Data.currency;
+          document.getElementById('insertMonth').value = sbv2Data.month;
+          document.getElementById("insertYear").value = sbv2Data.year;
+          document.getElementById("insertPrefix").value = "";
+          document.getElementById("insertBetAmt").value = 0;
+          document.getElementById("insertValidAmount").value = 0;
+          document.getElementById("insertMemberWl").value = 0;
+          document.getElementById("insertMemberComm").value = 0;
+          document.getElementById("insertMemberTotal").value = 0;
+          document.getElementById("insertCode").value = 0;
+          document.getElementById("insertMsg").value = "SUCCESS";
           updateInsertJsonPreview();
         }
       }
