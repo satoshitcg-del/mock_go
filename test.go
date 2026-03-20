@@ -268,6 +268,12 @@ func winloseHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	// ค่า fallback สำหรับไม่เจอข้อมูล
+	fallbackUsername := req.Username
+	if fallbackUsername == "" {
+		fallbackUsername = "superadmin"
+	}
+
 	var raw bson.M
 	if err := collection.FindOne(ctx, filter).Decode(&raw); err != nil {
 		// ไม่เจอข้อมูล - ส่ง 200 กลับไปพร้อมค่าจาก request
@@ -277,7 +283,7 @@ func winloseHandler(w http.ResponseWriter, r *http.Request) {
 			Code: 0,
 			Msg:  "SUCCESS",
 			Data: ResponseData{
-				Username:    req.Username,
+				Username:    fallbackUsername,
 				Prefix:      nil,
 				Currency:    currencyValue,
 				BetAmt:      0,
@@ -299,7 +305,7 @@ func winloseHandler(w http.ResponseWriter, r *http.Request) {
 			Code: 0,
 			Msg:  "SUCCESS",
 			Data: ResponseData{
-				Username:    req.Username,
+				Username:    fallbackUsername,
 				Prefix:      nil,
 				Currency:    currencyValue,
 				BetAmt:      0,
@@ -356,7 +362,7 @@ func winloseHandler(w http.ResponseWriter, r *http.Request) {
 			Code: 0,
 			Msg:  "SUCCESS",
 			Data: ResponseData{
-				Username:    req.Username,
+				Username:    fallbackUsername,
 				Prefix:      nil,
 				Currency:    currencyValue,
 				BetAmt:      0,
