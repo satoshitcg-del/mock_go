@@ -247,6 +247,9 @@ func winloseHandler(w http.ResponseWriter, r *http.Request) {
 	if currencyValue == "" {
 		currencyValue = req.Currency
 	}
+	if currencyValue == "" {
+		currencyValue = "THB"
+	}
 	if currencyValue != "" {
 		conds = append(conds, bson.M{"data.currency": currencyValue})
 	}
