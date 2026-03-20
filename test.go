@@ -270,13 +270,45 @@ func winloseHandler(w http.ResponseWriter, r *http.Request) {
 
 	var raw bson.M
 	if err := collection.FindOne(ctx, filter).Decode(&raw); err != nil {
-		http.Error(w, "Record not found", http.StatusNotFound)
+		// ไม่เจอข้อมูล - ส่ง 200 กลับไปพร้อมค่าจาก request
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(ResponseBody{
+			Code: 0,
+			Msg:  "SUCCESS",
+			Data: ResponseData{
+				Username:    req.Username,
+				Prefix:      nil,
+				Currency:    currencyValue,
+				BetAmt:      0,
+				ValidAmount: 0,
+				MemberWl:    0,
+				MemberComm:  0,
+				MemberTotal: 0,
+			},
+		})
 		return
 	}
 
 	rawData, ok := raw["data"]
 	if !ok || rawData == nil {
-		http.Error(w, "Record not found", http.StatusNotFound)
+		// ไม่เจอ field data - ส่ง 200 กลับไปพร้อมค่าจาก request
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(ResponseBody{
+			Code: 0,
+			Msg:  "SUCCESS",
+			Data: ResponseData{
+				Username:    req.Username,
+				Prefix:      nil,
+				Currency:    currencyValue,
+				BetAmt:      0,
+				ValidAmount: 0,
+				MemberWl:    0,
+				MemberComm:  0,
+				MemberTotal: 0,
+			},
+		})
 		return
 	}
 
@@ -317,7 +349,23 @@ func winloseHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(candidates) == 0 {
-		http.Error(w, "Record not found", http.StatusNotFound)
+		// ไม่เจอ candidate ที่ตรง - ส่ง 200 กลับไปพร้อมค่าจาก request
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(ResponseBody{
+			Code: 0,
+			Msg:  "SUCCESS",
+			Data: ResponseData{
+				Username:    req.Username,
+				Prefix:      nil,
+				Currency:    currencyValue,
+				BetAmt:      0,
+				ValidAmount: 0,
+				MemberWl:    0,
+				MemberComm:  0,
+				MemberTotal: 0,
+			},
+		})
 		return
 	}
 
