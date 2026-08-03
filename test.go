@@ -206,43 +206,7 @@ func winloseHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("Received Request: %+v\n", req)
 
-	client, err := getMongoClient()
-	if err != nil {
-		http.Error(w, "Database connection error", http.StatusInternalServerError)
-		return
-	}
-
-	var conds []bson.M
-	if req.Month != "" {
-		// รองรับทั้ง "01" และ "1" สำหรับเดือน
-		monthPatterns := []string{req.Month}
-		if len(req.Month) == 1 && req.Month >= "1" && req.Month <= "9" {
-			// ถ้าเป็น "1"-"9" เพิ่ม "01"-"09"
-			monthPatterns = append(monthPatterns, "0"+req.Month)
-		} else if len(req.Month) == 2 && req.Month[0] == '0' && req.Month[1] >= '1' && req.Month[1] <= '9' {
-			// ถ้าเป็น "01"-"09" เพิ่ม "1"-"9"
-			monthPatterns = append(monthPatterns, string(req.Month[1]))
-		}
-		
-		var monthConds []bson.M
-		for _, m := range monthPatterns {
-			monthConds = append(monthConds, bson.M{"month": m})
-			monthConds = append(monthConds, bson.M{"data.month": m})
-		}
-		conds = append(conds, bson.M{"$or": monthConds})
-	}
-	if req.Year != "" {
-		conds = append(conds, bson.M{
-			"$or": []bson.M{
-				{"year": req.Year},
-				{"data.year": req.Year},
-			},
-		})
-	}
-	if req.Username != "" {
-		conds = append(conds, bson.M{"data.username": req.Username})
-	}
-	// รองรับทั้ง 'cur' และ 'currency' parameter
+	// DB ใช้ไม่ได้ - ตอบ 0 เสมอ ด้วยค่าจาก request
 	currencyValue := req.Cur
 	if currencyValue == "" {
 		currencyValue = req.Currency
@@ -250,183 +214,28 @@ func winloseHandler(w http.ResponseWriter, r *http.Request) {
 	if currencyValue == "" {
 		currencyValue = "THB"
 	}
-	if currencyValue != "" {
-		conds = append(conds, bson.M{"data.currency": currencyValue})
-	}
-	if req.Web != "" {
-		conds = append(conds, bson.M{
-			"$or": []bson.M{
-				{"client_name": req.Web},
-				{"data.web": req.Web},
-			},
-		})
-	}
 
-	filter := bson.M{}
-	if len(conds) > 0 {
-		filter["$and"] = conds
-	}
-
-	collection := client.Database("test_data").Collection("snapshot")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	// ค่า fallback สำหรับไม่เจอข้อมูล
 	fallbackUsername := req.Username
 	if fallbackUsername == "" {
 		fallbackUsername = "superadmin"
 	}
 
-	var raw bson.M
-	if err := collection.FindOne(ctx, filter).Decode(&raw); err != nil {
-		// ไม่เจอข้อมูล - ส่ง 200 กลับไปพร้อมค่าจาก request
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(ResponseBody{
-			Code: 0,
-			Msg:  "SUCCESS",
-			Data: ResponseData{
-				Username:    fallbackUsername,
-				Prefix:      nil,
-				Currency:    currencyValue,
-				BetAmt:      0,
-				ValidAmount: 0,
-				MemberWl:    0,
-				MemberComm:  0,
-				MemberTotal: 0,
-			},
-		})
-		return
-	}
-
-	rawData, ok := raw["data"]
-	if !ok || rawData == nil {
-		// ไม่เจอ field data - ส่ง 200 กลับไปพร้อมค่าจาก request
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(ResponseBody{
-			Code: 0,
-			Msg:  "SUCCESS",
-			Data: ResponseData{
-				Username:    fallbackUsername,
-				Prefix:      nil,
-				Currency:    currencyValue,
-				BetAmt:      0,
-				ValidAmount: 0,
-				MemberWl:    0,
-				MemberComm:  0,
-				MemberTotal: 0,
-			},
-		})
-		return
-	}
-
-	var candidates []snapshotCandidate
-	switch v := rawData.(type) {
-	case bson.M:
-		var item SnapshotItem
-		if dataBytes, err := bson.Marshal(v); err == nil {
-			_ = bson.Unmarshal(dataBytes, &item)
-			asMap := map[string]interface{}(v)
-			suspended, hasSuspend := getSuspendedFlag(asMap)
-			candidates = append(candidates, snapshotCandidate{item: item, suspended: suspended, hasSuspend: hasSuspend})
-		}
-	case map[string]interface{}:
-		var item SnapshotItem
-		if dataBytes, err := bson.Marshal(v); err == nil {
-			_ = bson.Unmarshal(dataBytes, &item)
-			suspended, hasSuspend := getSuspendedFlag(v)
-			candidates = append(candidates, snapshotCandidate{item: item, suspended: suspended, hasSuspend: hasSuspend})
-		}
-	case []interface{}:
-		for _, entry := range v {
-			asMap, ok := entry.(map[string]interface{})
-			if !ok {
-				if asBson, ok := entry.(bson.M); ok {
-					asMap = asBson
-				} else {
-					continue
-				}
-			}
-			var item SnapshotItem
-			if dataBytes, err := bson.Marshal(asMap); err == nil {
-				_ = bson.Unmarshal(dataBytes, &item)
-				suspended, hasSuspend := getSuspendedFlag(asMap)
-				candidates = append(candidates, snapshotCandidate{item: item, suspended: suspended, hasSuspend: hasSuspend})
-			}
-		}
-	}
-
-	if len(candidates) == 0 {
-		// ไม่เจอ candidate ที่ตรง - ส่ง 200 กลับไปพร้อมค่าจาก request
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(ResponseBody{
-			Code: 0,
-			Msg:  "SUCCESS",
-			Data: ResponseData{
-				Username:    fallbackUsername,
-				Prefix:      nil,
-				Currency:    currencyValue,
-				BetAmt:      0,
-				ValidAmount: 0,
-				MemberWl:    0,
-				MemberComm:  0,
-				MemberTotal: 0,
-			},
-		})
-		return
-	}
-
-	var selected *snapshotCandidate
-	for i := range candidates {
-		candidate := &candidates[i]
-		if req.Username != "" && candidate.item.Username != req.Username {
-			continue
-		}
-		if req.Cur != "" && candidate.item.Currency != req.Cur {
-			continue
-		}
-		if req.Web != "" && candidate.item.Web != "" && candidate.item.Web != req.Web {
-			continue
-		}
-		selected = candidate
-		break
-	}
-	if selected == nil {
-		selected = &candidates[0]
-	}
-
-	if selected.hasSuspend && selected.suspended {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{
-			"code": 403,
-			"msg":  "Permission denied.",
-		})
-		return
-	}
-
-	// 3. เตรียมข้อมูล Response (Mock Data จาก Log ของคุณ)
-	mockResponse := ResponseBody{
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(ResponseBody{
 		Code: 0,
 		Msg:  "SUCCESS",
 		Data: ResponseData{
-			Username:    selected.item.Username,
-			Prefix:      selected.item.Prefix,
-			Currency:    selected.item.Currency,
-			BetAmt:      selected.item.BetAmt,
-			ValidAmount: selected.item.ValidAmount,
-			MemberWl:    selected.item.MemberWl,
-			MemberComm:  selected.item.MemberComm,
-			MemberTotal: selected.item.MemberTotal,
+			Username:    fallbackUsername,
+			Prefix:      nil,
+			Currency:    currencyValue,
+			BetAmt:      0,
+			ValidAmount: 0,
+			MemberWl:    0,
+			MemberComm:  0,
+			MemberTotal: 0,
 		},
-	}
-
-	// 4. ตั้งค่า Header และส่ง JSON กลับไป
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(mockResponse)
+	})
 }
 
 func snapshotAllHandler(w http.ResponseWriter, r *http.Request) {
