@@ -386,16 +386,39 @@ func winloseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, ResponseBody{Code: 0, Msg: "SUCCESS", Data: ResponseData{
-		Username:    str(selected, "username"),
-		Prefix:      prefixPtr(selected),
-		Currency:    str(selected, "currency"),
-		BetAmt:      num(selected, "betAmt"),
-		ValidAmount: num(selected, "validAmount"),
-		MemberWl:    num(selected, "memberWl"),
-		MemberComm:  num(selected, "memberComm"),
-		MemberTotal: num(selected, "memberTotal"),
-	}})
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"code": 0, "msg": "SUCCESS", "data": buildData(selected),
+	})
+}
+
+// buildData สร้างก้อน data ของ response
+//
+// 🔑 สินค้าแต่ละตัวใน BO อ่านคนละช่อง (`wlsnapshot_data.response`) เช่น
+//    SportbookV.2 -> data.memberTotal · Amb SuperAPI -> data.memberWl · Thai Lotto -> data.invoiceAmt
+// จึง **echo ทุก field ที่ผู้ใช้ใส่ไว้ใน snapshot** ออกไปด้วย เพื่อให้ mock ตัวเดียวรองรับได้ทุกสินค้า
+// โดยยังคงช่องมาตรฐานเดิมไว้ครบ (คนที่อ่านช่องเดิมอยู่ไม่พัง)
+func buildData(item map[string]interface{}) map[string]interface{} {
+	data := map[string]interface{}{
+		"username":    str(item, "username"),
+		"prefix":      prefixPtr(item),
+		"currency":    str(item, "currency"),
+		"betAmt":      num(item, "betAmt"),
+		"validAmount": num(item, "validAmount"),
+		"memberWl":    num(item, "memberWl"),
+		"memberComm":  num(item, "memberComm"),
+		"memberTotal": num(item, "memberTotal"),
+	}
+	// ช่องอื่นที่ผู้ใช้ใส่มาเอง (invoiceAmt, winlose, amount, ...) ส่งต่อทั้งหมด
+	for k, v := range item {
+		switch k {
+		case "web", "month", "year", "suspended": // ช่องที่ใช้จับคู่เท่านั้น ไม่ต้องส่งกลับ
+			continue
+		}
+		if _, exists := data[k]; !exists {
+			data[k] = v
+		}
+	}
+	return data
 }
 
 // buildWinloseFilter สร้าง filter ชุดเดียวกับ Mongo query เดิม (commit 93538f23)
