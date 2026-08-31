@@ -1,23 +1,31 @@
 package main
 
+// Mock Go — winlose mock API แบบ in-memory (ไม่พึ่ง MongoDB)
+//
+// เดิม handler ทุกตัวอ่าน/เขียน MongoDB `test_data.snapshot` แต่ตอน deploy จริงต่อ DB ไม่ได้
+// (commit 92dfead6 จึงตัด DB path ของ winlose ทิ้งแล้ว hardcode ให้ตอบ 0 เสมอ)
+// ไฟล์นี้เปลี่ยนแหล่งเก็บเป็น map ในหน่วยความจำแทน — สัญญา JSON ของทุก endpoint เหมือนเดิม
+//
+// 🔴 ข้อมูลอยู่ในหน่วยความจำ ⇒ **หายเมื่อ restart/redeploy** (ยอมรับได้สำหรับ mock ที่ใช้ทำ QA)
+//    ถ้าต้องการให้ข้อมูลอยู่ถาวร ให้ตั้ง SEED_SNAPSHOTS เป็น JSON array ของ snapshot
+//    แล้วเซิร์ฟเวอร์จะโหลดตอน start ทุกครั้ง
+
 import (
-	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 	"sync"
-	"time"
-
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// Struct สำหรับรับ Request (ตาม Log)
+// ── สัญญาเดิม ห้ามเปลี่ยนรูปร่าง ────────────────────────────────────────────────
+
+// RequestPayload — body ที่ BO ส่งมาที่ /winloseEsByMonthMulti
 type RequestPayload struct {
 	Cur      string `json:"cur"`
 	Currency string `json:"currency"`
@@ -27,10 +35,10 @@ type RequestPayload struct {
 	Web      string `json:"web"`
 }
 
-// Struct สำหรับส่ง Response กลับ (ตาม Log)
+// ResponseData — ก้อน data ที่ตอบกลับ
 type ResponseData struct {
 	Username    string  `json:"username"`
-	Prefix      *string `json:"prefix"` // ใช้ *string เพราะใน log เป็น null/nil
+	Prefix      *string `json:"prefix"`
 	Currency    string  `json:"currency"`
 	BetAmt      float64 `json:"betAmt"`
 	ValidAmount float64 `json:"validAmount"`
@@ -45,36 +53,221 @@ type ResponseBody struct {
 	Data ResponseData `json:"data"`
 }
 
-type SnapshotItem struct {
-	MemberComm  float64 `bson:"memberComm"`
-	MemberTotal float64 `bson:"memberTotal"`
-	MemberWl    float64 `bson:"memberWl"`
-	Prefix      *string `bson:"prefix"`
-	Username    string  `bson:"username"`
-	ValidAmount float64 `bson:"validAmount"`
-	BetAmt      float64 `bson:"betAmt"`
-	Currency    string  `bson:"currency"`
-	Web         string  `bson:"web"`
-	Month       string  `bson:"month"`
-	Year        string  `bson:"year"`
+// ── ที่เก็บข้อมูลในหน่วยความจำ ─────────────────────────────────────────────────
+
+type store struct {
+	mu   sync.RWMutex
+	docs map[string]map[string]interface{} // _id (hex) -> document
+	seq  []string                          // เก็บลำดับที่ insert เพื่อให้ snapshotAll คืนค่าคงที่
 }
 
-type Snapshot struct {
-	ClientName string         `bson:"client_name"`
-	Prefix     string         `bson:"prefix"`
-	Data       []SnapshotItem `bson:"data"`
+var db = &store{docs: map[string]map[string]interface{}{}}
+
+func newID() string {
+	buf := make([]byte, 12)
+	if _, err := rand.Read(buf); err != nil {
+		return fmt.Sprintf("%024x", len(db.docs)+1)
+	}
+	return hex.EncodeToString(buf)
 }
 
-type snapshotCandidate struct {
-	item       SnapshotItem
-	suspended  bool
-	hasSuspend bool
+func (s *store) insert(doc map[string]interface{}) string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	id, _ := doc["_id"].(string)
+	if id == "" {
+		id = newID()
+	}
+	doc["_id"] = id
+	if _, exists := s.docs[id]; !exists {
+		s.seq = append(s.seq, id)
+	}
+	s.docs[id] = doc
+	return id
 }
+
+func (s *store) all() []map[string]interface{} {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make([]map[string]interface{}, 0, len(s.docs))
+	for _, id := range s.seq {
+		if doc, ok := s.docs[id]; ok {
+			out = append(out, doc)
+		}
+	}
+	return out
+}
+
+// findOne คืน document แรกที่ตรง filter (เลียนแบบ collection.FindOne)
+func (s *store) findOne(filter map[string]interface{}) map[string]interface{} {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for _, id := range s.seq {
+		doc, ok := s.docs[id]
+		if ok && matches(doc, filter) {
+			return doc
+		}
+	}
+	return nil
+}
+
+func (s *store) updateOne(filter, update map[string]interface{}, upsert bool) (matched, modified int, upsertedID interface{}) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, id := range s.seq {
+		doc, ok := s.docs[id]
+		if !ok || !matches(doc, filter) {
+			continue
+		}
+		for k, v := range update {
+			doc[k] = v
+		}
+		doc["_id"] = id
+		s.docs[id] = doc
+		return 1, 1, nil
+	}
+	if !upsert {
+		return 0, 0, nil
+	}
+	doc := map[string]interface{}{}
+	for k, v := range filter {
+		if !strings.HasPrefix(k, "$") && !strings.Contains(k, ".") {
+			doc[k] = v
+		}
+	}
+	for k, v := range update {
+		doc[k] = v
+	}
+	id, _ := doc["_id"].(string)
+	if id == "" {
+		id = newID()
+	}
+	doc["_id"] = id
+	s.docs[id] = doc
+	s.seq = append(s.seq, id)
+	return 0, 0, id
+}
+
+func (s *store) deleteOne(filter map[string]interface{}) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, id := range s.seq {
+		doc, ok := s.docs[id]
+		if !ok || !matches(doc, filter) {
+			continue
+		}
+		delete(s.docs, id)
+		s.seq = append(s.seq[:i], s.seq[i+1:]...)
+		return 1
+	}
+	return 0
+}
+
+// ── การจับคู่ filter (รองรับเท่าที่ Mongo query เดิมใช้จริง) ─────────────────────
+//
+// รองรับ: $and · $or · เท่ากันตรง ๆ · path แบบจุด เช่น "data.username"
+// ถ้า path วิ่งผ่าน array (เช่น data เป็น []) จะถือว่าตรงเมื่อมีสมาชิกตัวใดตัวหนึ่งตรง
+
+func matches(doc map[string]interface{}, filter map[string]interface{}) bool {
+	for key, want := range filter {
+		switch key {
+		case "$and":
+			list, ok := want.([]interface{})
+			if !ok {
+				return false
+			}
+			for _, sub := range list {
+				subMap, ok := toMap(sub)
+				if !ok || !matches(doc, subMap) {
+					return false
+				}
+			}
+		case "$or":
+			list, ok := want.([]interface{})
+			if !ok {
+				return false
+			}
+			any := false
+			for _, sub := range list {
+				subMap, ok := toMap(sub)
+				if ok && matches(doc, subMap) {
+					any = true
+					break
+				}
+			}
+			if !any {
+				return false
+			}
+		default:
+			if !pathHasValue(doc, strings.Split(key, "."), want) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func toMap(v interface{}) (map[string]interface{}, bool) {
+	m, ok := v.(map[string]interface{})
+	return m, ok
+}
+
+func pathHasValue(node interface{}, path []string, want interface{}) bool {
+	if len(path) == 0 {
+		return sameValue(node, want)
+	}
+	switch typed := node.(type) {
+	case map[string]interface{}:
+		child, ok := typed[path[0]]
+		if !ok {
+			return false
+		}
+		return pathHasValue(child, path[1:], want)
+	case []interface{}:
+		for _, entry := range typed {
+			if pathHasValue(entry, path, want) {
+				return true
+			}
+		}
+		return false
+	default:
+		return false
+	}
+}
+
+func sameValue(a, want interface{}) bool {
+	if a == nil || want == nil {
+		return a == want
+	}
+	af, aIsNum := asFloat(a)
+	wf, wIsNum := asFloat(want)
+	if aIsNum && wIsNum {
+		return af == wf
+	}
+	return fmt.Sprintf("%v", a) == fmt.Sprintf("%v", want)
+}
+
+func asFloat(v interface{}) (float64, bool) {
+	switch n := v.(type) {
+	case float64:
+		return n, true
+	case float32:
+		return float64(n), true
+	case int:
+		return float64(n), true
+	case int32:
+		return float64(n), true
+	case int64:
+		return float64(n), true
+	}
+	return 0, false
+}
+
+// ── helper ที่ยกมาจากเวอร์ชันเดิม ──────────────────────────────────────────────
 
 func getSuspendedFlag(m map[string]interface{}) (bool, bool) {
 	for k, v := range m {
-		key := strings.ToLower(strings.TrimSpace(k))
-		if key != "suspended" {
+		if strings.ToLower(strings.TrimSpace(k)) != "suspended" {
 			continue
 		}
 		switch val := v.(type) {
@@ -88,10 +281,6 @@ func getSuspendedFlag(m map[string]interface{}) (bool, bool) {
 			if lv == "false" || lv == "0" || lv == "no" {
 				return false, true
 			}
-		case int32:
-			return val != 0, true
-		case int64:
-			return val != 0, true
 		case float64:
 			return val != 0, true
 		}
@@ -99,143 +288,175 @@ func getSuspendedFlag(m map[string]interface{}) (bool, bool) {
 	return false, false
 }
 
-var (
-	mongoOnce   sync.Once
-	mongoClient *mongo.Client
-	mongoErr    error
-)
-
-type localConfig struct {
-	MongoURI string `json:"mongo_uri"`
+func str(m map[string]interface{}, key string) string {
+	if v, ok := m[key]; ok && v != nil {
+		return fmt.Sprintf("%v", v)
+	}
+	return ""
 }
 
-func loadDotEnv(path string) error {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	lines := strings.Split(string(data), "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
-			continue
-		}
-		key := strings.TrimSpace(parts[0])
-		val := strings.TrimSpace(parts[1])
-		if key == "" {
-			continue
-		}
-		if _, exists := os.LookupEnv(key); !exists {
-			_ = os.Setenv(key, val)
+func num(m map[string]interface{}, key string) float64 {
+	if v, ok := m[key]; ok {
+		if f, isNum := asFloat(v); isNum {
+			return f
 		}
 	}
-
-	return nil
+	return 0
 }
 
-func loadMongoURI() (string, error) {
-	_ = loadDotEnv(".env")
-
-	if uri := os.Getenv("MONGO_URI"); uri != "" {
-		return uri, nil
+func prefixPtr(m map[string]interface{}) *string {
+	v, ok := m["prefix"]
+	if !ok || v == nil {
+		return nil
 	}
-
-	data, err := os.ReadFile("config.json")
-	if err == nil {
-		var cfg localConfig
-		if err := json.Unmarshal(data, &cfg); err != nil {
-			return "", fmt.Errorf("invalid config.json: %w", err)
-		}
-		if cfg.MongoURI != "" {
-			return cfg.MongoURI, nil
-		}
-	}
-
-	return "", fmt.Errorf("missing MONGO_URI (env or config.json)")
+	s := fmt.Sprintf("%v", v)
+	return &s
 }
 
-func getMongoClient() (*mongo.Client, error) {
-	mongoOnce.Do(func() {
-		uri, err := loadMongoURI()
-		if err != nil {
-			log.Printf("mongo: %v", err)
-			mongoErr = err
-			return
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
+// ── handlers ──────────────────────────────────────────────────────────────────
 
-		client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
-		if err != nil {
-			log.Printf("mongo: connect failed: %v", err)
-			mongoErr = err
-			return
-		}
+func writeJSON(w http.ResponseWriter, status int, body interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(body)
+}
 
-		if err := client.Ping(ctx, nil); err != nil {
-			log.Printf("mongo: ping failed: %v", err)
-			mongoErr = err
-			return
-		}
-
-		log.Printf("mongo: connected")
-		mongoClient = client
-	})
-
-	return mongoClient, mongoErr
+func emptyWinlose(username, currency string) ResponseBody {
+	return ResponseBody{Code: 0, Msg: "SUCCESS", Data: ResponseData{
+		Username: username, Prefix: nil, Currency: currency,
+	}}
 }
 
 func winloseHandler(w http.ResponseWriter, r *http.Request) {
-	// 1. ตรวจสอบว่าเป็น POST Method หรือไม่
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// 2. อ่าน Body ที่ส่งมา (เพื่อดูว่าหน้าตาเหมือนที่คาดหวังไหม)
 	var req RequestPayload
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
 		return
 	}
-
 	fmt.Printf("Received Request: %+v\n", req)
 
-	// DB ใช้ไม่ได้ - ตอบ 0 เสมอ ด้วยค่าจาก request
-	currencyValue := req.Cur
-	if currencyValue == "" {
-		currencyValue = req.Currency
+	// รองรับทั้ง 'cur' และ 'currency' — ค่าเริ่มต้น THB (พฤติกรรมเดิม)
+	currency := req.Cur
+	if currency == "" {
+		currency = req.Currency
 	}
-	if currencyValue == "" {
-		currencyValue = "THB"
+	if currency == "" {
+		currency = "THB"
 	}
-
 	fallbackUsername := req.Username
 	if fallbackUsername == "" {
 		fallbackUsername = "superadmin"
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(ResponseBody{
-		Code: 0,
-		Msg:  "SUCCESS",
-		Data: ResponseData{
-			Username:    fallbackUsername,
-			Prefix:      nil,
-			Currency:    currencyValue,
-			BetAmt:      0,
-			ValidAmount: 0,
-			MemberWl:    0,
-			MemberComm:  0,
-			MemberTotal: 0,
-		},
-	})
+	filter := buildWinloseFilter(req, currency)
+	doc := db.findOne(filter)
+	if doc == nil {
+		writeJSON(w, http.StatusOK, emptyWinlose(fallbackUsername, currency))
+		return
+	}
+
+	candidates := collectCandidates(doc["data"])
+	if len(candidates) == 0 {
+		writeJSON(w, http.StatusOK, emptyWinlose(fallbackUsername, currency))
+		return
+	}
+
+	selected := candidates[0]
+	for _, candidate := range candidates {
+		if req.Username != "" && str(candidate, "username") != req.Username {
+			continue
+		}
+		if req.Cur != "" && str(candidate, "currency") != req.Cur {
+			continue
+		}
+		if web := str(candidate, "web"); req.Web != "" && web != "" && web != req.Web {
+			continue
+		}
+		selected = candidate
+		break
+	}
+
+	if suspended, has := getSuspendedFlag(selected); has && suspended {
+		writeJSON(w, http.StatusOK, map[string]interface{}{"code": 403, "msg": "Permission denied."})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, ResponseBody{Code: 0, Msg: "SUCCESS", Data: ResponseData{
+		Username:    str(selected, "username"),
+		Prefix:      prefixPtr(selected),
+		Currency:    str(selected, "currency"),
+		BetAmt:      num(selected, "betAmt"),
+		ValidAmount: num(selected, "validAmount"),
+		MemberWl:    num(selected, "memberWl"),
+		MemberComm:  num(selected, "memberComm"),
+		MemberTotal: num(selected, "memberTotal"),
+	}})
+}
+
+// buildWinloseFilter สร้าง filter ชุดเดียวกับ Mongo query เดิม (commit 93538f23)
+func buildWinloseFilter(req RequestPayload, currency string) map[string]interface{} {
+	var conds []interface{}
+
+	if req.Month != "" {
+		months := []string{req.Month}
+		// รองรับทั้ง "8" และ "08"
+		if len(req.Month) == 1 && req.Month >= "1" && req.Month <= "9" {
+			months = append(months, "0"+req.Month)
+		} else if len(req.Month) == 2 && req.Month[0] == '0' && req.Month[1] >= '1' && req.Month[1] <= '9' {
+			months = append(months, string(req.Month[1]))
+		}
+		var or []interface{}
+		for _, m := range months {
+			or = append(or, map[string]interface{}{"month": m})
+			or = append(or, map[string]interface{}{"data.month": m})
+		}
+		conds = append(conds, map[string]interface{}{"$or": or})
+	}
+	if req.Year != "" {
+		conds = append(conds, map[string]interface{}{"$or": []interface{}{
+			map[string]interface{}{"year": req.Year},
+			map[string]interface{}{"data.year": req.Year},
+		}})
+	}
+	if req.Username != "" {
+		conds = append(conds, map[string]interface{}{"data.username": req.Username})
+	}
+	if currency != "" {
+		conds = append(conds, map[string]interface{}{"data.currency": currency})
+	}
+	if req.Web != "" {
+		conds = append(conds, map[string]interface{}{"$or": []interface{}{
+			map[string]interface{}{"client_name": req.Web},
+			map[string]interface{}{"data.web": req.Web},
+		}})
+	}
+
+	if len(conds) == 0 {
+		return map[string]interface{}{}
+	}
+	return map[string]interface{}{"$and": conds}
+}
+
+// collectCandidates รองรับ data ที่เป็น object เดี่ยวหรือ array (เหมือนเดิม)
+func collectCandidates(raw interface{}) []map[string]interface{} {
+	switch typed := raw.(type) {
+	case map[string]interface{}:
+		return []map[string]interface{}{typed}
+	case []interface{}:
+		out := make([]map[string]interface{}, 0, len(typed))
+		for _, entry := range typed {
+			if m, ok := entry.(map[string]interface{}); ok {
+				out = append(out, m)
+			}
+		}
+		return out
+	}
+	return nil
 }
 
 func snapshotAllHandler(w http.ResponseWriter, r *http.Request) {
@@ -243,33 +464,7 @@ func snapshotAllHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-
-	client, err := getMongoClient()
-	if err != nil {
-		http.Error(w, "Database connection error", http.StatusInternalServerError)
-		return
-	}
-
-	collection := client.Database("test_data").Collection("snapshot")
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	cursor, err := collection.Find(ctx, bson.M{})
-	if err != nil {
-		http.Error(w, "Query failed", http.StatusInternalServerError)
-		return
-	}
-	defer cursor.Close(ctx)
-
-	var snapshots []bson.M
-	if err := cursor.All(ctx, &snapshots); err != nil {
-		http.Error(w, "Decode failed", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(snapshots)
+	writeJSON(w, http.StatusOK, db.all())
 }
 
 func insertSnapshotHandler(w http.ResponseWriter, r *http.Request) {
@@ -277,8 +472,7 @@ func insertSnapshotHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-
-	var doc bson.M
+	var doc map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&doc); err != nil {
 		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
 		return
@@ -287,57 +481,30 @@ func insertSnapshotHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Empty body", http.StatusBadRequest)
 		return
 	}
-
-	client, err := getMongoClient()
-	if err != nil {
-		http.Error(w, "Database connection error", http.StatusInternalServerError)
-		return
-	}
-
-	collection := client.Database("test_data").Collection("snapshot")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	res, err := collection.InsertOne(ctx, doc)
-	if err != nil {
-		http.Error(w, "Insert failed", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{
-		"code":       0,
-		"msg":        "SUCCESS",
-		"insertedId": res.InsertedID,
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"code": 0, "msg": "SUCCESS", "insertedId": db.insert(doc),
 	})
 }
 
 type modifyRequest struct {
-	Filter bson.M `json:"filter"`
-	Update bson.M `json:"update"`
-	Upsert bool   `json:"upsert"`
+	Filter map[string]interface{} `json:"filter"`
+	Update map[string]interface{} `json:"update"`
+	Upsert bool                   `json:"upsert"`
 }
 
 type deleteRequest struct {
-	Filter bson.M `json:"filter"`
+	Filter map[string]interface{} `json:"filter"`
 }
 
-func normalizeFilter(filter bson.M) bson.M {
+// normalizeFilter รองรับ _id ที่ส่งมาเป็น {"$oid": "..."} เหมือนเดิม
+func normalizeFilter(filter map[string]interface{}) map[string]interface{} {
 	if filter == nil {
-		return bson.M{}
+		return map[string]interface{}{}
 	}
 	if idVal, ok := filter["_id"]; ok {
-		switch v := idVal.(type) {
-		case string:
-			if oid, err := primitive.ObjectIDFromHex(v); err == nil {
-				filter["_id"] = oid
-			}
-		case map[string]interface{}:
-			if hex, ok := v["$oid"].(string); ok {
-				if oid, err := primitive.ObjectIDFromHex(hex); err == nil {
-					filter["_id"] = oid
-				}
+		if m, isMap := idVal.(map[string]interface{}); isMap {
+			if hexID, ok := m["$oid"].(string); ok {
+				filter["_id"] = hexID
 			}
 		}
 	}
@@ -349,7 +516,6 @@ func updateSnapshotHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-
 	var req modifyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
@@ -359,34 +525,10 @@ func updateSnapshotHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing filter or update", http.StatusBadRequest)
 		return
 	}
-
-	client, err := getMongoClient()
-	if err != nil {
-		http.Error(w, "Database connection error", http.StatusInternalServerError)
-		return
-	}
-
-	filter := normalizeFilter(req.Filter)
-	update := bson.M{"$set": req.Update}
-
-	collection := client.Database("test_data").Collection("snapshot")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	res, err := collection.UpdateOne(ctx, filter, update, options.Update().SetUpsert(req.Upsert))
-	if err != nil {
-		http.Error(w, "Update failed", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{
-		"code":      0,
-		"msg":       "SUCCESS",
-		"matched":   res.MatchedCount,
-		"modified":  res.ModifiedCount,
-		"upserted":  res.UpsertedID,
+	matched, modified, upserted := db.updateOne(normalizeFilter(req.Filter), req.Update, req.Upsert)
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"code": 0, "msg": "SUCCESS",
+		"matched": matched, "modified": modified, "upserted": upserted,
 	})
 }
 
@@ -395,7 +537,6 @@ func deleteSnapshotHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-
 	var req deleteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
@@ -405,32 +546,52 @@ func deleteSnapshotHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing filter", http.StatusBadRequest)
 		return
 	}
-
-	client, err := getMongoClient()
-	if err != nil {
-		http.Error(w, "Database connection error", http.StatusInternalServerError)
-		return
-	}
-
-	filter := normalizeFilter(req.Filter)
-
-	collection := client.Database("test_data").Collection("snapshot")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	res, err := collection.DeleteOne(ctx, filter)
-	if err != nil {
-		http.Error(w, "Delete failed", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{
-		"code":    0,
-		"msg":     "SUCCESS",
-		"deleted": res.DeletedCount,
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"code": 0, "msg": "SUCCESS", "deleted": db.deleteOne(normalizeFilter(req.Filter)),
 	})
+}
+
+// rootHandler — เดิม "/" ตอบ 404 ทำให้แยกไม่ออกว่าเซิร์ฟเวอร์ตายหรือ route ผิด
+// ตอนนี้เสิร์ฟ index.html ถ้ามี ไม่งั้นตอบสถานะเป็น JSON
+func rootHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+	if data, err := os.ReadFile("index.html"); err == nil {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write(data)
+		return
+	}
+	paths := []string{
+		"POST /api/v1/ext/winloseEsByMonthMulti",
+		"GET  /api/v1/ext/snapshotAll",
+		"POST /api/v1/ext/insertSnapshot",
+		"POST /api/v1/ext/updateSnapshot",
+		"POST /api/v1/ext/deleteSnapshot",
+	}
+	sort.Strings(paths)
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"status": "ok", "storage": "in-memory", "records": len(db.all()), "endpoints": paths,
+	})
+}
+
+// loadSeed โหลดข้อมูลตั้งต้นจาก env SEED_SNAPSHOTS (JSON array ของ snapshot)
+// ใช้กู้ข้อมูลหลัง redeploy โดยไม่ต้องพึ่ง DB
+func loadSeed() {
+	raw := strings.TrimSpace(os.Getenv("SEED_SNAPSHOTS"))
+	if raw == "" {
+		return
+	}
+	var docs []map[string]interface{}
+	if err := json.Unmarshal([]byte(raw), &docs); err != nil {
+		log.Printf("SEED_SNAPSHOTS ไม่ใช่ JSON array ที่ถูกต้อง: %v", err)
+		return
+	}
+	for _, doc := range docs {
+		db.insert(doc)
+	}
+	log.Printf("โหลด seed จาก SEED_SNAPSHOTS แล้ว %d รายการ", len(docs))
 }
 
 func withCORS(next http.HandlerFunc) http.HandlerFunc {
@@ -447,8 +608,9 @@ func withCORS(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func main() {
-	// สร้าง Route ให้ตรงกับ Path ใน Log
-	// URL เดิม: https://api-topup.sportbookprivate.com
+	loadSeed()
+
+	http.HandleFunc("/", withCORS(rootHandler))
 	http.HandleFunc("/api/v1/ext/winloseEsByMonthMulti", withCORS(winloseHandler))
 	http.HandleFunc("/api/v1/ext/snapshotAll", withCORS(snapshotAllHandler))
 	http.HandleFunc("/api/v1/ext/insertSnapshot", withCORS(insertSnapshotHandler))
@@ -460,12 +622,10 @@ func main() {
 		port = "8080"
 	}
 
-	fmt.Printf("Mock Server started at port %s\n", port)
+	fmt.Printf("Mock Server started at port %s (storage: in-memory)\n", port)
+	fmt.Printf("Console:  http://localhost:%s/\n", port)
 	fmt.Printf("Endpoint: http://localhost:%s/api/v1/ext/winloseEsByMonthMulti\n", port)
-	fmt.Printf("Endpoint: http://localhost:%s/api/v1/ext/snapshotAll\n", port)
-	fmt.Printf("Endpoint: http://localhost:%s/api/v1/ext/insertSnapshot\n", port)
-	fmt.Printf("Endpoint: http://localhost:%s/api/v1/ext/updateSnapshot\n", port)
-	fmt.Printf("Endpoint: http://localhost:%s/api/v1/ext/deleteSnapshot\n", port)
+	fmt.Println("⚠️  ข้อมูลอยู่ในหน่วยความจำ หายเมื่อ restart — ใช้ SEED_SNAPSHOTS ถ้าต้องการข้อมูลตั้งต้น")
 
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatal(err)

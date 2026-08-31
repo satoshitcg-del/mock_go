@@ -3,12 +3,22 @@ Mock Go Fresh API
 
 ภาพรวม
 -------
-เซิร์ฟเวอร์ Go สำหรับ mock API โดยใช้ MongoDB เป็นแหล่งข้อมูล พร้อม HTML Console ที่ออกแบบใหม่ รองรับการใช้งานที่ง่ายและสะดวก
+เซิร์ฟเวอร์ Go สำหรับ mock API (เก็บข้อมูลในหน่วยความจำ ไม่พึ่ง MongoDB) พร้อม HTML Console ที่ออกแบบใหม่ รองรับการใช้งานที่ง่ายและสะดวก
 
 ข้อกำหนด
 ---------
 - Go 1.20+ (หรือเทียบเท่า)
-- ตั้งค่า `MONGO_URI` ใน env หรือไฟล์ `.env`
+- **ไม่ต้องใช้ MongoDB** — ข้อมูลเก็บในหน่วยความจำของ process
+
+> 🔴 **ข้อมูลหายเมื่อ restart / redeploy** (ยอมรับได้สำหรับ mock ที่ใช้ทำ QA)
+> ถ้าต้องการข้อมูลตั้งต้นทุกครั้งที่ boot ให้ตั้ง env `SEED_SNAPSHOTS` เป็น JSON array ของ snapshot เช่น
+>
+> ```json
+> [{"client_name":"QATEST","prefix":"QATEST","data":[
+>   {"username":"qauser1","prefix":"QA1","currency":"THB","web":"QATEST",
+>    "month":"08","year":"2026","betAmt":1000000,"validAmount":950000,
+>    "memberWl":-250000.75,"memberComm":1200.5,"memberTotal":-248800.25}]}]
+> ```
 
 วิธีรัน
 -------

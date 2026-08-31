@@ -6,5 +6,7 @@ services:
     startCommand: ./app
     autoDeploy: false
     envVars:
-      - key: MONGO_URI
+      # ไม่ต้องใช้ MongoDB แล้ว — เก็บข้อมูลในหน่วยความจำ
+      # ตั้ง SEED_SNAPSHOTS เป็น JSON array ถ้าต้องการข้อมูลตั้งต้นตอน boot
+      - key: SEED_SNAPSHOTS
         sync: false
