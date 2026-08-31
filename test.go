@@ -392,6 +392,83 @@ func winloseHandler(w http.ResponseWriter, r *http.Request) {
 	respondWinlose(w, req)
 }
 
+// pgWinloseHandler — endpoint เฉพาะ PGSoft (URL ต้องมี "/pg/winlose")
+//
+// สัญญาฝั่ง BE (infrastructure/api/snapshot.go @ b2437cc):
+//   - Request:  POST {username: lower(agentId), web: lower(clientName), agent_ids: [..],
+//               prefixs: [..], agent_prefix: {agentId: prefix}, month, year}
+//     (FindProductPGSoftID :412-451 — ไม่ได้ส่ง username/web ของสมาชิกแบบสินค้าอื่น)
+//   - Response: GetWinloseByPGSoft :388-399 หยิบ snapshot["data"] มาเป็น a.response[0]
+//     แล้ว CreateSnapshotPG :466-490 marshal a.response[0] → unmarshal เป็น {data: []PGWinloseData}
+//     ⇒ 🔑 รูปที่ถูกคือ "ซ้อนสองชั้น": {"data": {"data": [ {username, prefix, currency,
+//        betAmt, validAmount, memberWl, memberComm, memberTotal}, ... ]}}
+//     winlose ที่ระบบใช้ต่อรายการ = memberWl · prefix ต่อรายการต้องเป็น prefix จริง
+func pgWinloseHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
+		return
+	}
+	month, _ := req["month"].(string)
+	year, _ := req["year"].(string)
+	wantPrefix := map[string]bool{}
+	if raw, ok := req["prefixs"].([]interface{}); ok {
+		for _, p := range raw {
+			if s, ok := p.(string); ok && s != "" {
+				wantPrefix[strings.ToUpper(s)] = true
+			}
+		}
+	}
+	recordTrace(traceEntry{Method: r.Method, Path: r.URL.Path,
+		Headers: pickHeaders(r), Body: map[string]interface{}{
+			"month": month, "year": year,
+			"agent_ids": req["agent_ids"], "prefixs": req["prefixs"],
+			"username": req["username"], "web": req["web"]}})
+
+	items := []map[string]interface{}{}
+	for _, doc := range db.all() {
+		if month != "" && !monthEquals(str(doc, "month"), month) {
+			continue
+		}
+		if year != "" && str(doc, "year") != "" && str(doc, "year") != year {
+			continue
+		}
+		docPrefix := strings.ToUpper(str(doc, "prefix"))
+		for _, cand := range collectCandidates(doc["data"]) {
+			p := strings.ToUpper(str(cand, "prefix"))
+			if p == "" {
+				p = docPrefix
+			}
+			if len(wantPrefix) > 0 && !wantPrefix[p] {
+				continue
+			}
+			item := buildData(cand)
+			if s, ok := item["prefix"].(*string); !ok || s == nil || *s == "" {
+				pv := p
+				item["prefix"] = &pv
+			}
+			items = append(items, item)
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"code": 0, "msg": "SUCCESS",
+		"data": map[string]interface{}{"data": items},
+	})
+}
+
+// monthEquals เทียบเดือนแบบยอมทั้ง "8" และ "08" (และ doc ที่ไม่ระบุเดือน = จับคู่ได้)
+func monthEquals(docMonth, reqMonth string) bool {
+	if docMonth == "" {
+		return true
+	}
+	trim := func(s string) string { return strings.TrimPrefix(s, "0") }
+	return trim(docMonth) == trim(reqMonth)
+}
+
 // pickHeaders เก็บเฉพาะ header ที่ช่วยดีบัก — ไม่เก็บค่า token จริง
 func pickHeaders(r *http.Request) map[string]string {
 	out := map[string]string{}
@@ -734,7 +811,7 @@ func main() {
 	// ก็ต่อเมื่อ URL มีสตริง "/pg/winlose" อยู่ ⇒ ต้องมี route นี้ mock ถึงจะใช้กับ PGSoft ได้
 	// body ที่ BE ส่งมาต่างออกไป (มี agent_ids / prefixs / agent_prefix เพิ่ม) แต่ช่องที่ใช้จับคู่
 	// ยังเป็นชุดเดิม (username / web / cur / month / year) จึงใช้ handler ตัวเดียวกันได้
-	http.HandleFunc("/v1/pg/winlose", withCORS(winloseHandler))
+	http.HandleFunc("/v1/pg/winlose", withCORS(pgWinloseHandler))
 	// SUPER_API ยิงแบบ GET + query param ไปที่ <url>/report/monthlyMemberWinLose
 	http.HandleFunc("/report/monthlyMemberWinLose", withCORS(superAPIHandler))
 	http.HandleFunc("/api/v1/ext/snapshotAll", withCORS(snapshotAllHandler))
