@@ -588,6 +588,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	paths := []string{
 		"POST /api/v1/ext/winloseEsByMonthMulti",
+		"POST /v1/pg/winlose (PGSoft)",
 		"GET  /api/v1/ext/snapshotAll",
 		"POST /api/v1/ext/insertSnapshot",
 		"POST /api/v1/ext/updateSnapshot",
@@ -635,6 +636,11 @@ func main() {
 
 	http.HandleFunc("/", withCORS(rootHandler))
 	http.HandleFunc("/api/v1/ext/winloseEsByMonthMulti", withCORS(winloseHandler))
+	// PGSoft ใช้ code path แยกใน BE (processGetWlPG) และ SnapshotByProduct จะเข้า path นั้น
+	// ก็ต่อเมื่อ URL มีสตริง "/pg/winlose" อยู่ ⇒ ต้องมี route นี้ mock ถึงจะใช้กับ PGSoft ได้
+	// body ที่ BE ส่งมาต่างออกไป (มี agent_ids / prefixs / agent_prefix เพิ่ม) แต่ช่องที่ใช้จับคู่
+	// ยังเป็นชุดเดิม (username / web / cur / month / year) จึงใช้ handler ตัวเดียวกันได้
+	http.HandleFunc("/v1/pg/winlose", withCORS(winloseHandler))
 	http.HandleFunc("/api/v1/ext/snapshotAll", withCORS(snapshotAllHandler))
 	http.HandleFunc("/api/v1/ext/insertSnapshot", withCORS(insertSnapshotHandler))
 	http.HandleFunc("/api/v1/ext/updateSnapshot", withCORS(updateSnapshotHandler))
