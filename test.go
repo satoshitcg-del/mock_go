@@ -339,7 +339,36 @@ func winloseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Printf("Received Request: %+v\n", req)
+	respondWinlose(w, req)
+}
 
+// superAPIHandler — endpoint ของสินค้าชนิด SUPER_API
+//
+// BE ยิงแบบ GET พร้อม query param ไม่ใช่ POST body
+// (infrastructure/api/snapshot.go · GetWinloseBySuperAPI):
+//
+//	GET <wlsnapshot_data.url>/report/monthlyMemberWinLose?month=&year=&currency=&username=
+//	headers: auth-name, auth-token (ได้จาก LoginSuperAPI — mock ไม่ตรวจ)
+//
+// ⚠️ ไม่มี `web` ส่งมา ⇒ จับคู่ด้วย username + currency + month/year เท่านั้น
+func superAPIHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	q := r.URL.Query()
+	req := RequestPayload{
+		Month:    q.Get("month"),
+		Year:     q.Get("year"),
+		Currency: q.Get("currency"),
+		Cur:      q.Get("currency"),
+		Username: q.Get("username"),
+	}
+	fmt.Printf("Received SuperAPI Request: %+v\n", req)
+	respondWinlose(w, req)
+}
+
+func respondWinlose(w http.ResponseWriter, req RequestPayload) {
 	// รองรับทั้ง 'cur' และ 'currency' — ค่าเริ่มต้น THB (พฤติกรรมเดิม)
 	currency := req.Cur
 	if currency == "" {
@@ -641,6 +670,8 @@ func main() {
 	// body ที่ BE ส่งมาต่างออกไป (มี agent_ids / prefixs / agent_prefix เพิ่ม) แต่ช่องที่ใช้จับคู่
 	// ยังเป็นชุดเดิม (username / web / cur / month / year) จึงใช้ handler ตัวเดียวกันได้
 	http.HandleFunc("/v1/pg/winlose", withCORS(winloseHandler))
+	// SUPER_API ยิงแบบ GET + query param ไปที่ <url>/report/monthlyMemberWinLose
+	http.HandleFunc("/report/monthlyMemberWinLose", withCORS(superAPIHandler))
 	http.HandleFunc("/api/v1/ext/snapshotAll", withCORS(snapshotAllHandler))
 	http.HandleFunc("/api/v1/ext/insertSnapshot", withCORS(insertSnapshotHandler))
 	http.HandleFunc("/api/v1/ext/updateSnapshot", withCORS(updateSnapshotHandler))
