@@ -63,6 +63,52 @@ type store struct {
 
 var db = &store{docs: map[string]map[string]interface{}{}}
 
+// ── บันทึก request ล่าสุด (ไว้ดีบักว่า BE ส่งอะไรมาจริง) ─────────────────────────
+//
+// mock ไม่มีทางรู้ว่า caller ส่งอะไรมาถ้าไม่ได้เปิด log ของ host
+// จึงเก็บ N รายการล่าสุดไว้ในหน่วยความจำ แล้วอ่านผ่าน /api/v1/ext/lastRequests
+
+const maxTrace = 50
+
+type traceEntry struct {
+	Seq     int                    `json:"seq"`
+	Method  string                 `json:"method"`
+	Path    string                 `json:"path"`
+	Query   map[string][]string    `json:"query,omitempty"`
+	Headers map[string]string      `json:"headers,omitempty"`
+	Body    map[string]interface{} `json:"body,omitempty"`
+	Matched bool                   `json:"matched"`
+}
+
+var (
+	traceMu  sync.Mutex
+	traceLog []traceEntry
+	traceSeq int
+)
+
+func recordTrace(e traceEntry) {
+	traceMu.Lock()
+	defer traceMu.Unlock()
+	traceSeq++
+	e.Seq = traceSeq
+	traceLog = append(traceLog, e)
+	if len(traceLog) > maxTrace {
+		traceLog = traceLog[len(traceLog)-maxTrace:]
+	}
+}
+
+func lastRequestsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	traceMu.Lock()
+	out := make([]traceEntry, len(traceLog))
+	copy(out, traceLog)
+	traceMu.Unlock()
+	writeJSON(w, http.StatusOK, out)
+}
+
 func newID() string {
 	buf := make([]byte, 12)
 	if _, err := rand.Read(buf); err != nil {
@@ -339,7 +385,25 @@ func winloseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Printf("Received Request: %+v\n", req)
+	recordTrace(traceEntry{Method: r.Method, Path: r.URL.Path,
+		Headers: pickHeaders(r), Body: map[string]interface{}{
+			"cur": req.Cur, "currency": req.Currency, "month": req.Month,
+			"year": req.Year, "username": req.Username, "web": req.Web}})
 	respondWinlose(w, req)
+}
+
+// pickHeaders เก็บเฉพาะ header ที่ช่วยดีบัก — ไม่เก็บค่า token จริง
+func pickHeaders(r *http.Request) map[string]string {
+	out := map[string]string{}
+	for _, k := range []string{"Auth-Name", "Content-Type", "User-Agent"} {
+		if v := r.Header.Get(k); v != "" {
+			out[k] = v
+		}
+	}
+	if r.Header.Get("Auth-Token") != "" {
+		out["Auth-Token"] = "[REDACTED]"
+	}
+	return out
 }
 
 // superAPIHandler — endpoint ของสินค้าชนิด SUPER_API
@@ -365,6 +429,7 @@ func superAPIHandler(w http.ResponseWriter, r *http.Request) {
 		Username: q.Get("username"),
 	}
 	fmt.Printf("Received SuperAPI Request: %+v\n", req)
+	recordTrace(traceEntry{Method: r.Method, Path: r.URL.Path, Query: q, Headers: pickHeaders(r)})
 	respondWinlose(w, req)
 }
 
@@ -673,6 +738,8 @@ func main() {
 	// SUPER_API ยิงแบบ GET + query param ไปที่ <url>/report/monthlyMemberWinLose
 	http.HandleFunc("/report/monthlyMemberWinLose", withCORS(superAPIHandler))
 	http.HandleFunc("/api/v1/ext/snapshotAll", withCORS(snapshotAllHandler))
+	// ดูว่า caller ส่งอะไรมาจริง — ใช้ตอนหา key ที่ใช้จับคู่ไม่เจอ
+	http.HandleFunc("/api/v1/ext/lastRequests", withCORS(lastRequestsHandler))
 	http.HandleFunc("/api/v1/ext/insertSnapshot", withCORS(insertSnapshotHandler))
 	http.HandleFunc("/api/v1/ext/updateSnapshot", withCORS(updateSnapshotHandler))
 	http.HandleFunc("/api/v1/ext/deleteSnapshot", withCORS(deleteSnapshotHandler))
