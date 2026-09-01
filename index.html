@@ -383,43 +383,90 @@
         color: var(--text-secondary);
       }
       #seedPanel .alert {
-        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 11px 14px;
+        margin-bottom: 22px;
         border-radius: var(--radius);
         background: var(--bg-tertiary);
-        border-left: 3px solid var(--info, var(--accent));
-        font-size: 0.875rem;
+        border-left: 3px solid var(--accent);
+        font-size: 0.8125rem;
         line-height: 1.55;
         color: var(--text-secondary);
       }
-      #seedPanel .alert strong {
-        display: block;
-        margin-bottom: 2px;
-        color: var(--text-primary);
-      }
+      #seedPanel .alert strong { color: var(--text-primary); }
       #seedPanel .alert code {
         padding: 1px 5px;
         border-radius: var(--radius-sm);
         background: var(--bg-secondary);
-        font-size: 0.8125em;
+        font-size: 0.9em;
       }
+
+      #seedPanel .seed-step {
+        padding-top: 18px;
+        margin-top: 18px;
+        border-top: 1px solid var(--border);
+      }
+      #seedPanel .seed-step:first-of-type {
+        padding-top: 0;
+        margin-top: 0;
+        border-top: 0;
+      }
+      #seedPanel .seed-step-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin: 0 0 14px;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      #seedPanel .seed-step-no {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        flex: none;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+
       #seedPanel .form-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
         gap: 14px;
         margin-bottom: 14px;
       }
+      #seedPanel .form-grid:last-child { margin-bottom: 0; }
+      #seedPanel .form-grid-2 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+      #seedPanel .form-grid-3 { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+
       #seedPanel .form-hint {
         display: block;
-        margin-top: 6px;
-        font-size: 0.8125rem;
+        margin-top: 5px;
+        font-size: 0.75rem;
         color: var(--text-muted);
       }
+      #seedPanel .seed-label-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+      #seedPanel .seed-label-row label { margin: 0; }
+      #seedPanel .seed-label-row .form-hint { margin: 0; }
+
       #seedPanel .checkbox-label {
         display: flex;
         align-items: center;
         gap: 9px;
         margin-bottom: 9px;
-        font-size: 0.9rem;
+        font-size: 0.875rem;
         color: var(--text-secondary);
         cursor: pointer;
       }
@@ -430,12 +477,7 @@
         flex: none;
         accent-color: var(--accent);
       }
-      #seedPanel .form-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin: 18px 0 4px;
-      }
+
       #seedPanel .seed-source {
         padding: 14px;
         margin-bottom: 16px;
@@ -443,24 +485,63 @@
         border-radius: var(--radius);
         background: var(--bg-secondary);
       }
-      #seedPanel .seed-source-head {
-        margin-bottom: 12px;
-      }
+      #seedPanel .seed-source-head { margin-bottom: 12px; }
       #seedPanel .seed-source-head strong {
         display: block;
-        font-size: 0.9rem;
+        font-size: 0.875rem;
         color: var(--text-primary);
       }
+      #seedPanel .seed-source-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      #seedPanel .seed-source-foot .checkbox-label { margin: 0; }
       #seedPanel .seed-progress {
         margin-top: 10px;
-        font-size: 0.8125rem;
+        padding-top: 10px;
+        border-top: 1px solid var(--border);
+        font-size: 0.75rem;
         color: var(--text-secondary);
         font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+
+      #seedPanel .seed-actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+      }
+      #seedPanel .seed-actions-sep {
+        flex: 1 1 0;
+        min-width: 0;
+      }
+      #seedPanel .btn-sm {
+        padding: 7px 12px;
+        font-size: 0.8125rem;
+      }
+      #seedPanel .btn-ghost {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+      }
+      #seedPanel .btn-ghost:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+      }
+
+      #seedPanel .response-panel { margin-top: 20px; }
+      #seedPanel #seedResponseBody {
+        max-height: 340px;
+        overflow: auto;
       }
       #seedPanel textarea {
         width: 100%;
         font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 0.875rem;
+        font-size: 0.8125rem;
         line-height: 1.6;
         resize: vertical;
       }
@@ -1975,92 +2056,109 @@
                 <p class="card-subtitle" data-i18n="seedSubtitle">One amount for many client names — the shape the accounting BE actually asks for</p>
               </div>
               <div class="card-body">
-                <div class="alert alert-info" style="margin-bottom:1rem">
+                <div class="alert">
                   <strong data-i18n="seedHintTitle">Key point</strong>
-                  <div data-i18n="seedHintBody">The BE sends <code>web</code> = the customer product's <code>client_name</code>, not the prefix. Paste every client_name here or the mock answers 0 for the ones it does not know.</div>
+                  <span data-i18n="seedHintBody">The BE sends <code>web</code> = the customer product's <code>client_name</code>, not the prefix. Paste every client_name here or the mock answers 0 for the ones it does not know.</span>
                 </div>
 
-                <div class="form-grid">
-                  <div class="form-group">
-                    <label data-i18n="seedMonth">Month</label>
-                    <select id="seedMonth"></select>
-                  </div>
-                  <div class="form-group">
-                    <label data-i18n="seedYear">Year</label>
-                    <select id="seedYear"></select>
-                  </div>
-                  <div class="form-group">
-                    <label data-i18n="seedAmountMode">Amount mode</label>
-                    <select id="seedAmountMode" onchange="seedAmountModeChanged()">
-                      <option value="fixed" data-i18n="seedModeFixed">Same for everyone</option>
-                      <option value="step" data-i18n="seedModeStep">Step up (x1, x2, x3 …)</option>
-                      <option value="random" data-i18n="seedModeRandom">Random in a range</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label data-i18n="seedAmount">Amount (negative = customer owes)</label>
-                    <input type="number" id="seedAmount" step="any" value="-63000" />
-                  </div>
-                  <div class="form-group" id="seedAmountMaxGroup" style="display:none">
-                    <label data-i18n="seedAmountMax">Up to</label>
-                    <input type="number" id="seedAmountMax" step="any" value="-500000" />
-                  </div>
-                  <div class="form-group">
-                    <label data-i18n="seedUsername">Username</label>
-                    <input type="text" id="seedUsername" value="superadmin" />
-                  </div>
-                  <div class="form-group">
-                    <label data-i18n="seedCurrency">Currency</label>
-                    <input type="text" id="seedCurrency" value="THB" />
-                  </div>
-                  <div class="form-group">
-                    <label data-i18n="seedPreset">Product</label>
-                    <select id="seedPreset">
-                      <option value="all" data-i18n="seedPresetAll">All fields (safe for every product)</option>
-                      <option value="memberTotal" data-i18n="seedPresetSb">Sportbook / Tiamut (data.memberTotal)</option>
-                      <option value="memberWl" data-i18n="seedPresetSuper">Amb SuperAPI (data.memberWl)</option>
-                      <option value="invoiceAmt" data-i18n="seedPresetLotto">Thai Lotto (data.invoiceAmt)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="seed-source">
-                  <div class="seed-source-head">
-                    <strong data-i18n="seedSourceTitle">Pull the names from the accounting system</strong>
-                    <span class="form-hint" data-i18n="seedSourceHint">The token stays in this browser tab only. It is never sent anywhere except the host you pick below.</span>
-                  </div>
-                  <div class="form-grid">
+                <section class="seed-step">
+                  <h3 class="seed-step-title"><span class="seed-step-no">1</span><span data-i18n="seedStepPeriod">Period and amount</span></h3>
+                  <div class="form-grid form-grid-2">
                     <div class="form-group">
-                      <label data-i18n="seedApiHost">Accounting API</label>
-                      <select id="seedApiHost">
-                        <option value="https://apixint-dev.askmebill.com">dev</option>
-                        <option value="https://apixint-sit.askmebill.com">sit</option>
-                        <option value="https://apixint-uat.askmebill.com">uat</option>
+                      <label data-i18n="seedMonth">Month</label>
+                      <select id="seedMonth"></select>
+                    </div>
+                    <div class="form-group">
+                      <label data-i18n="seedYear">Year</label>
+                      <select id="seedYear"></select>
+                    </div>
+                  </div>
+                  <div class="form-grid form-grid-3">
+                    <div class="form-group">
+                      <label data-i18n="seedAmountMode">Amount mode</label>
+                      <select id="seedAmountMode" onchange="seedAmountModeChanged()">
+                        <option value="fixed" data-i18n="seedModeFixed">Same for everyone</option>
+                        <option value="step" data-i18n="seedModeStep">Step up (x1, x2, x3 …)</option>
+                        <option value="random" data-i18n="seedModeRandom">Random in a range</option>
                       </select>
                     </div>
                     <div class="form-group">
-                      <label data-i18n="seedToken">Token (cookie TOKEN from the BO)</label>
-                      <input type="password" id="seedToken" placeholder="eyJ..." autocomplete="off" />
+                      <label data-i18n="seedAmount">Amount</label>
+                      <input type="number" id="seedAmount" step="any" value="-63000" />
+                      <span class="form-hint" data-i18n="seedAmountHint">Negative = the customer owes</span>
+                    </div>
+                    <div class="form-group" id="seedAmountMaxGroup" style="display:none">
+                      <label data-i18n="seedAmountMax">Up to</label>
+                      <input type="number" id="seedAmountMax" step="any" value="-500000" />
                     </div>
                   </div>
-                  <label class="checkbox-label">
-                    <input type="checkbox" id="seedRememberToken" />
-                    <span data-i18n="seedRememberLabel">Keep the token until I close this tab</span>
-                  </label>
-                  <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="seedFetchNames()" data-i18n="seedFetchBtn">Fetch client names</button>
-                    <button type="button" class="btn btn-primary" onclick="seedFetchAndRun()" data-i18n="seedOneClickBtn">Fetch and create</button>
+                </section>
+
+                <section class="seed-step">
+                  <h3 class="seed-step-title"><span class="seed-step-no">2</span><span data-i18n="seedStepProduct">Which field the amount lands in</span></h3>
+                  <div class="form-grid form-grid-3">
+                    <div class="form-group">
+                      <label data-i18n="seedPreset">Product</label>
+                      <select id="seedPreset">
+                        <option value="all" data-i18n="seedPresetAll">All fields (safe for every product)</option>
+                        <option value="memberTotal" data-i18n="seedPresetSb">Sportbook / Tiamut (data.memberTotal)</option>
+                        <option value="memberWl" data-i18n="seedPresetSuper">Amb SuperAPI (data.memberWl)</option>
+                        <option value="invoiceAmt" data-i18n="seedPresetLotto">Thai Lotto (data.invoiceAmt)</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label data-i18n="seedUsername">Username</label>
+                      <input type="text" id="seedUsername" value="superadmin" />
+                    </div>
+                    <div class="form-group">
+                      <label data-i18n="seedCurrency">Currency</label>
+                      <input type="text" id="seedCurrency" value="THB" />
+                    </div>
                   </div>
-                  <div class="seed-progress" id="seedProgress" style="display:none"></div>
-                </div>
+                </section>
 
-                <div class="form-group">
-                  <label data-i18n="seedWebs">Client names — one per line, or comma separated</label>
-                  <textarea id="seedWebs" rows="7" placeholder="ambking&#10;lazagame&#10;iprobetv2"></textarea>
-                  <small class="form-hint" id="seedWebCount">0</small>
-                </div>
+                <section class="seed-step">
+                  <h3 class="seed-step-title"><span class="seed-step-no">3</span><span data-i18n="seedStepNames">Client names</span></h3>
+                  <div class="seed-source">
+                    <div class="seed-source-head">
+                      <strong data-i18n="seedSourceTitle">Pull the names from the accounting system</strong>
+                      <span class="form-hint" data-i18n="seedSourceHint">The token stays in this browser tab only. It is never sent anywhere except the host you pick below.</span>
+                    </div>
+                    <div class="form-grid form-grid-2">
+                      <div class="form-group">
+                        <label data-i18n="seedApiHost">Accounting API</label>
+                        <select id="seedApiHost">
+                          <option value="https://apixint-dev.askmebill.com">dev</option>
+                          <option value="https://apixint-sit.askmebill.com">sit</option>
+                          <option value="https://apixint-uat.askmebill.com">uat</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label data-i18n="seedToken">Token (cookie TOKEN from the BO)</label>
+                        <input type="password" id="seedToken" placeholder="eyJ…" autocomplete="off" />
+                      </div>
+                    </div>
+                    <div class="seed-source-foot">
+                      <label class="checkbox-label">
+                        <input type="checkbox" id="seedRememberToken" />
+                        <span data-i18n="seedRememberLabel">Keep the token until I close this tab</span>
+                      </label>
+                      <button type="button" class="btn btn-secondary btn-sm" onclick="seedFetchNames()" data-i18n="seedFetchBtn">Fetch client names</button>
+                    </div>
+                    <div class="seed-progress" id="seedProgress" style="display:none"></div>
+                  </div>
 
-                <div class="form-group">
+                  <div class="form-group">
+                    <div class="seed-label-row">
+                      <label data-i18n="seedWebs">One per line, or comma separated</label>
+                      <span class="form-hint" id="seedWebCount">0</span>
+                    </div>
+                    <textarea id="seedWebs" rows="6" placeholder="ambking&#10;lazagame&#10;iprobetv2"></textarea>
+                  </div>
+                </section>
+
+                <section class="seed-step">
+                  <h3 class="seed-step-title"><span class="seed-step-no">4</span><span data-i18n="seedStepGo">Create</span></h3>
                   <label class="checkbox-label">
                     <input type="checkbox" id="seedFallback" checked />
                     <span data-i18n="seedFallbackLabel">Add a catch-all row (empty web)</span>
@@ -2070,14 +2168,16 @@
                     <span data-i18n="seedReplaceLabel">Delete this month first (replace instead of append)</span>
                   </label>
                   <div class="form-hint" id="seedExisting"></div>
-                </div>
 
-                <div class="form-actions">
-                  <button type="button" class="btn btn-secondary" onclick="seedPreview()" data-i18n="seedPreviewBtn">Preview</button>
-                  <button type="button" class="btn btn-primary" onclick="seedRun()" data-i18n="seedRunBtn">Create</button>
-                  <button type="button" class="btn btn-secondary" onclick="seedProbe()" data-i18n="seedProbeBtn">Test one call</button>
-                  <button type="button" class="btn btn-secondary" onclick="seedLastRequests()" data-i18n="seedLastBtn">What did the BE send?</button>
-                </div>
+                  <div class="seed-actions">
+                    <button type="button" class="btn btn-primary" onclick="seedFetchAndRun()" data-i18n="seedOneClickBtn">Fetch and create</button>
+                    <button type="button" class="btn btn-secondary" onclick="seedRun()" data-i18n="seedRunBtn">Create</button>
+                    <span class="seed-actions-sep"></span>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="seedPreview()" data-i18n="seedPreviewBtn">Preview</button>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="seedProbe()" data-i18n="seedProbeBtn">Test one call</button>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="seedLastRequests()" data-i18n="seedLastBtn">What did the BE send?</button>
+                  </div>
+                </section>
 
                 <div class="response-panel" id="seedResponse" style="display:none">
                   <div class="response-header">
@@ -2306,7 +2406,7 @@
           seedHintBody: "The BE sends web = the customer product's client_name, not the prefix. Paste every client_name here or the mock answers 0 for the ones it does not know.",
           seedMonth: "Month",
           seedYear: "Year",
-          seedAmount: "Amount (negative = customer owes)",
+          seedAmount: "Amount",
           seedUsername: "Username",
           seedCurrency: "Currency",
           seedPreset: "Product",
@@ -2314,7 +2414,7 @@
           seedPresetSb: "Sportbook / Tiamut (data.memberTotal)",
           seedPresetSuper: "Amb SuperAPI (data.memberWl)",
           seedPresetLotto: "Thai Lotto (data.invoiceAmt)",
-          seedWebs: "Client names — one per line, or comma separated",
+          seedWebs: "One per line, or comma separated",
           seedFallbackLabel: "Add a catch-all row (empty web)",
           seedReplaceLabel: "Delete this month first (replace instead of append)",
           seedPreviewBtn: "Preview",
@@ -2341,6 +2441,11 @@
           seedExistingSome: "This month already holds {n} rows — they will be deleted",
           seedExistingNone: "This month is empty",
           seedFetchSkipped: "{n} customers could not be read",
+          seedStepPeriod: "Period and amount",
+          seedStepProduct: "Which field the amount lands in",
+          seedStepNames: "Client names",
+          seedStepGo: "Create",
+          seedAmountHint: "Negative = the customer owes",
           navConfiguration: "Configuration",
           navSettings: "Settings",
           
@@ -2518,7 +2623,7 @@
           seedHintBody: "ระบบบัญชีส่ง web = client_name ของสินค้าลูกค้า ไม่ใช่ prefix — ต้องใส่ client_name ให้ครบ ไม่งั้นตัวที่ไม่รู้จักจะได้ยอด 0",
           seedMonth: "เดือน",
           seedYear: "ปี",
-          seedAmount: "ยอด (ติดลบ = ลูกค้าค้างจ่าย)",
+          seedAmount: "ยอด",
           seedUsername: "ชื่อผู้ใช้",
           seedCurrency: "สกุลเงิน",
           seedPreset: "สินค้า",
@@ -2526,7 +2631,7 @@
           seedPresetSb: "Sportbook / Tiamut (data.memberTotal)",
           seedPresetSuper: "Amb SuperAPI (data.memberWl)",
           seedPresetLotto: "Thai Lotto (data.invoiceAmt)",
-          seedWebs: "รายชื่อ client name — บรรทัดละตัว หรือคั่นด้วยจุลภาค",
+          seedWebs: "บรรทัดละตัว หรือคั่นด้วยจุลภาค",
           seedFallbackLabel: "ใส่แถวสำรอง (web ว่าง) ให้ตัวที่ไม่ได้ระบุ",
           seedReplaceLabel: "ลบข้อมูลเดือนนี้ก่อน (แทนที่ ไม่ใช่เพิ่มทับ)",
           seedPreviewBtn: "ดูตัวอย่าง",
@@ -2553,6 +2658,11 @@
           seedExistingSome: "เดือนนี้มีข้อมูลอยู่ {n} แถว — จะถูกลบ",
           seedExistingNone: "เดือนนี้ยังไม่มีข้อมูล",
           seedFetchSkipped: "อ่านลูกค้าไม่สำเร็จ {n} ราย",
+          seedStepPeriod: "ช่วงเวลาและยอด",
+          seedStepProduct: "ยอดจะไปลงช่องไหน",
+          seedStepNames: "รายชื่อลูกค้า",
+          seedStepGo: "สร้าง",
+          seedAmountHint: "ติดลบ = ลูกค้าค้างจ่าย",
           navConfiguration: "การตั้งค่า",
           navSettings: "ตั้งค่า",
           
