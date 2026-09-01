@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -507,7 +508,78 @@ func superAPIHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Printf("Received SuperAPI Request: %+v\n", req)
 	recordTrace(traceEntry{Method: r.Method, Path: r.URL.Path, Query: q, Headers: pickHeaders(r)})
-	respondWinlose(w, req)
+	respondSuperAPIWinlose(w, req)
+}
+
+
+// respondSuperAPIWinlose — contract ของ BE SUPER_API (core/models/snapshot.go:43-55 @b2437cc):
+// data เป็น object เดี่ยว และ memberWl / rawMemberWl ต้องเป็น "สตริง" — ส่งเป็นเลขแล้ว BE
+// unmarshal พัง (GeneralErr, ไม่เขียน snapshot) · prefix ต้องเป็น null หรือตรง UserProduct.Prefix
+// เป๊ะ ไม่งั้น snapshot ถูก key ผิดเงียบ ๆ (api/snapshot.go:704-708)
+func respondSuperAPIWinlose(w http.ResponseWriter, req RequestPayload) {
+	currency := req.Cur
+	if currency == "" {
+		currency = req.Currency
+	}
+	if currency == "" {
+		currency = "THB"
+	}
+	username := req.Username
+	if username == "" {
+		username = "superadmin"
+	}
+	memberWl := 0.0
+	var prefix *string
+	if item, ok := selectWinloseItem(req, currency); ok {
+		if suspended, has := getSuspendedFlag(item); has && suspended {
+			writeJSON(w, http.StatusOK, map[string]interface{}{"code": 403, "msg": "Permission denied."})
+			return
+		}
+		memberWl = num(item, "memberWl")
+		if u := str(item, "username"); u != "" {
+			username = u
+		}
+		if c := str(item, "currency"); c != "" {
+			currency = c
+		}
+		prefix = prefixPtr(item)
+	}
+	wl := strconv.FormatFloat(memberWl, 'f', -1, 64)
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"code": 0, "msg": "SUCCESS",
+		"data": map[string]interface{}{
+			"username": username, "prefix": prefix, "currency": currency,
+			"memberWl": wl, "rawMemberWl": wl,
+		},
+	})
+}
+
+// selectWinloseItem — logic จับคู่ document + เลือก candidate ชุดเดียวกับ respondWinlose
+func selectWinloseItem(req RequestPayload, currency string) (map[string]interface{}, bool) {
+	filter := buildWinloseFilter(req, currency)
+	doc := db.findOne(filter)
+	if doc == nil {
+		return nil, false
+	}
+	candidates := collectCandidates(doc["data"])
+	if len(candidates) == 0 {
+		return nil, false
+	}
+	selected := candidates[0]
+	for _, candidate := range candidates {
+		if req.Username != "" && str(candidate, "username") != req.Username {
+			continue
+		}
+		if req.Cur != "" && str(candidate, "currency") != req.Cur {
+			continue
+		}
+		if web := str(candidate, "web"); req.Web != "" && web != "" && web != req.Web {
+			continue
+		}
+		selected = candidate
+		break
+	}
+	return selected, true
 }
 
 func respondWinlose(w http.ResponseWriter, req RequestPayload) {
@@ -524,32 +596,10 @@ func respondWinlose(w http.ResponseWriter, req RequestPayload) {
 		fallbackUsername = "superadmin"
 	}
 
-	filter := buildWinloseFilter(req, currency)
-	doc := db.findOne(filter)
-	if doc == nil {
+	selected, ok := selectWinloseItem(req, currency)
+	if !ok {
 		writeJSON(w, http.StatusOK, emptyWinlose(fallbackUsername, currency))
 		return
-	}
-
-	candidates := collectCandidates(doc["data"])
-	if len(candidates) == 0 {
-		writeJSON(w, http.StatusOK, emptyWinlose(fallbackUsername, currency))
-		return
-	}
-
-	selected := candidates[0]
-	for _, candidate := range candidates {
-		if req.Username != "" && str(candidate, "username") != req.Username {
-			continue
-		}
-		if req.Cur != "" && str(candidate, "currency") != req.Cur {
-			continue
-		}
-		if web := str(candidate, "web"); req.Web != "" && web != "" && web != req.Web {
-			continue
-		}
-		selected = candidate
-		break
 	}
 
 	if suspended, has := getSuspendedFlag(selected); has && suspended {
