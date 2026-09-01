@@ -376,6 +376,74 @@
         animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
+      /* Seed Month — สโคปเฉพาะแท็บนี้ ไม่แตะสไตล์เดิมของหน้า */
+      #seedPanel .card-subtitle {
+        margin: 4px 0 0;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+      }
+      #seedPanel .alert {
+        padding: 12px 14px;
+        border-radius: var(--radius);
+        background: var(--bg-tertiary);
+        border-left: 3px solid var(--info, var(--accent));
+        font-size: 0.875rem;
+        line-height: 1.55;
+        color: var(--text-secondary);
+      }
+      #seedPanel .alert strong {
+        display: block;
+        margin-bottom: 2px;
+        color: var(--text-primary);
+      }
+      #seedPanel .alert code {
+        padding: 1px 5px;
+        border-radius: var(--radius-sm);
+        background: var(--bg-secondary);
+        font-size: 0.8125em;
+      }
+      #seedPanel .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      #seedPanel .form-hint {
+        display: block;
+        margin-top: 6px;
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+      }
+      #seedPanel .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 9px;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+      }
+      #seedPanel .checkbox-label input {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        flex: none;
+        accent-color: var(--accent);
+      }
+      #seedPanel .form-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 18px 0 4px;
+      }
+      #seedPanel textarea {
+        width: 100%;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        resize: vertical;
+      }
+
       @keyframes fadeInUp {
         from { 
           opacity: 0; 
@@ -1385,6 +1453,12 @@
               </svg>
               <span data-i18n="navManage">Manage Data</span>
             </button>
+            <button class="nav-item" data-tab="seed">
+              <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              </svg>
+              <span data-i18n="navSeed">Seed Month</span>
+            </button>
           </div>
 
           <div class="nav-section">
@@ -1873,6 +1947,84 @@
           </div>
 
           <!-- Settings Tab -->
+          <div class="tab-panel" id="seedPanel">
+            <div class="card">
+              <div class="card-header">
+                <h2 class="card-title" data-i18n="seedTitle">Seed a whole month</h2>
+                <p class="card-subtitle" data-i18n="seedSubtitle">One amount for many client names — the shape the accounting BE actually asks for</p>
+              </div>
+              <div class="card-body">
+                <div class="alert alert-info" style="margin-bottom:1rem">
+                  <strong data-i18n="seedHintTitle">Key point</strong>
+                  <div data-i18n="seedHintBody">The BE sends <code>web</code> = the customer product's <code>client_name</code>, not the prefix. Paste every client_name here or the mock answers 0 for the ones it does not know.</div>
+                </div>
+
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label data-i18n="seedMonth">Month</label>
+                    <select id="seedMonth"></select>
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="seedYear">Year</label>
+                    <select id="seedYear"></select>
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="seedAmount">Amount (negative = customer owes)</label>
+                    <input type="number" id="seedAmount" step="any" value="-63000" />
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="seedUsername">Username</label>
+                    <input type="text" id="seedUsername" value="superadmin" />
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="seedCurrency">Currency</label>
+                    <input type="text" id="seedCurrency" value="THB" />
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="seedPreset">Product</label>
+                    <select id="seedPreset">
+                      <option value="all" data-i18n="seedPresetAll">All fields (safe for every product)</option>
+                      <option value="memberTotal" data-i18n="seedPresetSb">Sportbook / Tiamut (data.memberTotal)</option>
+                      <option value="memberWl" data-i18n="seedPresetSuper">Amb SuperAPI (data.memberWl)</option>
+                      <option value="invoiceAmt" data-i18n="seedPresetLotto">Thai Lotto (data.invoiceAmt)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label data-i18n="seedWebs">Client names — one per line, or comma separated</label>
+                  <textarea id="seedWebs" rows="7" placeholder="ambking&#10;lazagame&#10;iprobetv2"></textarea>
+                  <small class="form-hint" id="seedWebCount">0</small>
+                </div>
+
+                <div class="form-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="seedFallback" checked />
+                    <span data-i18n="seedFallbackLabel">Add a catch-all row (empty web)</span>
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="seedReplace" checked />
+                    <span data-i18n="seedReplaceLabel">Delete this month first (replace instead of append)</span>
+                  </label>
+                </div>
+
+                <div class="form-actions">
+                  <button type="button" class="btn btn-secondary" onclick="seedPreview()" data-i18n="seedPreviewBtn">Preview</button>
+                  <button type="button" class="btn btn-primary" onclick="seedRun()" data-i18n="seedRunBtn">Create</button>
+                  <button type="button" class="btn btn-secondary" onclick="seedProbe()" data-i18n="seedProbeBtn">Test one call</button>
+                  <button type="button" class="btn btn-secondary" onclick="seedLastRequests()" data-i18n="seedLastBtn">What did the BE send?</button>
+                </div>
+
+                <div class="response-panel" id="seedResponse" style="display:none">
+                  <div class="response-header">
+                    <div class="response-status" id="seedStatus"></div>
+                  </div>
+                  <pre id="seedResponseBody"></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="tab-panel" id="settingsPanel">
             <div class="card">
               <div class="card-header">
@@ -2082,6 +2234,32 @@
           navDataManagement: "Data Management",
           navInsert: "Insert Record",
           navManage: "Manage Data",
+          navSeed: "Seed Month",
+          titleSeed: "Seed a Whole Month",
+          seedTitle: "Seed a whole month",
+          seedSubtitle: "One amount for many client names — the shape the accounting BE actually asks for",
+          seedHintTitle: "Key point",
+          seedHintBody: "The BE sends web = the customer product's client_name, not the prefix. Paste every client_name here or the mock answers 0 for the ones it does not know.",
+          seedMonth: "Month",
+          seedYear: "Year",
+          seedAmount: "Amount (negative = customer owes)",
+          seedUsername: "Username",
+          seedCurrency: "Currency",
+          seedPreset: "Product",
+          seedPresetAll: "All fields (safe for every product)",
+          seedPresetSb: "Sportbook / Tiamut (data.memberTotal)",
+          seedPresetSuper: "Amb SuperAPI (data.memberWl)",
+          seedPresetLotto: "Thai Lotto (data.invoiceAmt)",
+          seedWebs: "Client names — one per line, or comma separated",
+          seedFallbackLabel: "Add a catch-all row (empty web)",
+          seedReplaceLabel: "Delete this month first (replace instead of append)",
+          seedPreviewBtn: "Preview",
+          seedRunBtn: "Create",
+          seedProbeBtn: "Test one call",
+          seedLastBtn: "What did the BE send?",
+          seedErrNoWebs: "Add at least one client name",
+          seedErrAmount: "Amount must be a number",
+          seedCountUnit: "client names",
           navConfiguration: "Configuration",
           navSettings: "Settings",
           
@@ -2251,6 +2429,32 @@
           navDataManagement: "จัดการข้อมูล",
           navInsert: "เพิ่มข้อมูล",
           navManage: "จัดการข้อมูล",
+          navSeed: "สร้างทั้งเดือน",
+          titleSeed: "สร้างข้อมูลทั้งเดือน",
+          seedTitle: "สร้างข้อมูลทั้งเดือน",
+          seedSubtitle: "ยอดเดียว ใส่ให้ client name หลายตัว — รูปแบบที่ระบบบัญชีเรียกมาจริง",
+          seedHintTitle: "จุดสำคัญ",
+          seedHintBody: "ระบบบัญชีส่ง web = client_name ของสินค้าลูกค้า ไม่ใช่ prefix — ต้องใส่ client_name ให้ครบ ไม่งั้นตัวที่ไม่รู้จักจะได้ยอด 0",
+          seedMonth: "เดือน",
+          seedYear: "ปี",
+          seedAmount: "ยอด (ติดลบ = ลูกค้าค้างจ่าย)",
+          seedUsername: "ชื่อผู้ใช้",
+          seedCurrency: "สกุลเงิน",
+          seedPreset: "สินค้า",
+          seedPresetAll: "ใส่ทุกช่อง (ปลอดภัยกับทุกสินค้า)",
+          seedPresetSb: "Sportbook / Tiamut (data.memberTotal)",
+          seedPresetSuper: "Amb SuperAPI (data.memberWl)",
+          seedPresetLotto: "Thai Lotto (data.invoiceAmt)",
+          seedWebs: "รายชื่อ client name — บรรทัดละตัว หรือคั่นด้วยจุลภาค",
+          seedFallbackLabel: "ใส่แถวสำรอง (web ว่าง) ให้ตัวที่ไม่ได้ระบุ",
+          seedReplaceLabel: "ลบข้อมูลเดือนนี้ก่อน (แทนที่ ไม่ใช่เพิ่มทับ)",
+          seedPreviewBtn: "ดูตัวอย่าง",
+          seedRunBtn: "สร้าง",
+          seedProbeBtn: "ลองยิงหนึ่งครั้ง",
+          seedLastBtn: "ระบบบัญชีส่งอะไรมา",
+          seedErrNoWebs: "ใส่ client name อย่างน้อยหนึ่งตัว",
+          seedErrAmount: "ยอดต้องเป็นตัวเลข",
+          seedCountUnit: "ชื่อ",
           navConfiguration: "การตั้งค่า",
           navSettings: "ตั้งค่า",
           
@@ -2574,6 +2778,7 @@
         query: "titleQueryData",
         insert: "titleInsertRecord",
         manage: "titleManageData",
+        seed: "titleSeed",
         settings: "titleSettings",
       };
 
@@ -2606,6 +2811,8 @@
         } else if (tab === "manage") {
           loadAllData();
           startAutoRefresh("manage");
+        } else if (tab === "seed") {
+          seedInitSelects();
         }
       }
 
@@ -2667,9 +2874,11 @@
           countdownInterval = null;
         }
         
-        // Hide all auto-refresh indicators
-        document.getElementById("dashboardAutoRefresh").style.display = "none";
-        document.getElementById("manageAutoRefresh").style.display = "none";
+        // Hide all auto-refresh indicators (บางแท็บไม่มี badge นี้ — กัน null ไม่ให้ init ทั้งหน้าพัง)
+        ["dashboardAutoRefresh", "manageAutoRefresh"].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = "none";
+        });
       }
 
       function resetCountdown(tab) {
@@ -3627,6 +3836,141 @@
           showToast("success", translations[currentLang].toastSuccess, translations[currentLang].btnCopyJson);
         });
       }
+
+
+      // ═══ Seed Month — สร้าง mock ทั้งเดือนด้วยการกดปุ่ม ═══
+      // ความรู้ที่ฝังไว้: BE ส่ง web = client_name ของ user_product ไม่ใช่ prefix
+      // ถ้า web ไม่ตรง candidate ไหนเลย mock จะตอบ 0 ⇒ ต้องใส่ให้ครบ หรือติ๊กแถวสำรองไว้
+
+      function seedWebList() {
+        return (document.getElementById("seedWebs").value || "")
+          .split(/[\n,;]+/).map(x => x.trim()).filter(Boolean)
+          .filter((v, i, a) => a.indexOf(v) === i);
+      }
+
+      function seedBuildBody() {
+        const month = document.getElementById("seedMonth").value;
+        const year = document.getElementById("seedYear").value;
+        const amount = parseFloat(document.getElementById("seedAmount").value);
+        const username = document.getElementById("seedUsername").value.trim() || "superadmin";
+        const currency = document.getElementById("seedCurrency").value.trim() || "THB";
+        const preset = document.getElementById("seedPreset").value;
+        const webs = seedWebList();
+        if (!webs.length) throw new Error("noWebs");
+        if (isNaN(amount)) throw new Error("badAmount");
+
+        const row = (web) => {
+          const base = { username, web, prefix: "", currency };
+          if (preset === "all") {
+            return { ...base, memberTotal: amount, memberWl: amount, invoiceAmt: amount,
+                     betAmt: 0, validAmount: 0, memberComm: 0 };
+          }
+          return { ...base, [preset]: amount };
+        };
+        const data = webs.map(row);
+        if (document.getElementById("seedFallback").checked) data.push(row(""));
+        return { month, year, data };
+      }
+
+      function seedShow(kind, title, payload) {
+        const panel = document.getElementById("seedResponse");
+        const status = document.getElementById("seedStatus");
+        const body = document.getElementById("seedResponseBody");
+        panel.style.display = "block";
+        status.className = "response-status " + (kind === "error" ? "error" : "success");
+        status.textContent = title;
+        body.innerHTML = highlightJson(typeof payload === "string" ? payload : JSON.stringify(payload, null, 2));
+      }
+
+      function seedPreview() {
+        try {
+          const body = seedBuildBody();
+          seedShow("success", `${body.data.length} rows · ${body.month}/${body.year}`, body);
+        } catch (e) {
+          seedShow("error", seedErrText(e), {});
+        }
+      }
+
+      function seedErrText(e) {
+        const t = translations[currentLang];
+        if (e && e.message === "noWebs") return t.seedErrNoWebs || "Add at least one client name";
+        if (e && e.message === "badAmount") return t.seedErrAmount || "Amount must be a number";
+        return String(e && e.message ? e.message : e);
+      }
+
+      async function seedRun() {
+        let body;
+        try { body = seedBuildBody(); }
+        catch (e) { seedShow("error", seedErrText(e), {}); return; }
+
+        const steps = [];
+        if (document.getElementById("seedReplace").checked) {
+          const del = await apiRequest("/api/v1/ext/deleteSnapshot", {
+            method: "POST",
+            body: JSON.stringify({ filter: { month: body.month, year: body.year } }),
+          });
+          steps.push({ step: "deleteSnapshot", ok: del.ok, result: del.data });
+        }
+        const ins = await apiRequest("/api/v1/ext/insertSnapshot", {
+          method: "POST", body: JSON.stringify(body),
+        });
+        steps.push({ step: "insertSnapshot", ok: ins.ok, rows: body.data.length, result: ins.data });
+
+        seedShow(ins.ok ? "success" : "error",
+          ins.ok ? `${body.data.length} rows · ${body.month}/${body.year}` : "failed", steps);
+        if (ins.ok) showToast("success", translations[currentLang].seedRunBtn,
+          `${body.data.length} · ${body.month}/${body.year}`);
+      }
+
+      async function seedProbe() {
+        let body;
+        try { body = seedBuildBody(); }
+        catch (e) { seedShow("error", seedErrText(e), {}); return; }
+        const first = body.data[0];
+        const req = { username: first.username, web: first.web, cur: first.currency,
+                      month: body.month, year: body.year };
+        const res = await apiRequest("/api/v1/ext/winloseEsByMonthMulti", {
+          method: "POST", body: JSON.stringify(req),
+        });
+        seedShow(res.ok ? "success" : "error", res.ok ? "200" : "failed",
+          { sent: req, got: res.data });
+      }
+
+      async function seedLastRequests() {
+        const res = await apiRequest("/api/v1/ext/lastRequests", { method: "GET" });
+        seedShow(res.ok ? "success" : "error", res.ok ? "lastRequests" : "failed", res.data);
+      }
+
+      function seedInitSelects() {
+        const mSel = document.getElementById("seedMonth");
+        const ySel = document.getElementById("seedYear");
+        if (!mSel || !ySel || mSel.options.length) return;
+        const now = new Date();
+        for (let i = 1; i <= 12; i++) {
+          const o = document.createElement("option");
+          o.value = String(i); o.textContent = String(i).padStart(2, "0");
+          if (i === now.getMonth() + 1) o.selected = true;
+          mSel.appendChild(o);
+        }
+        for (let y = now.getFullYear() - 1; y <= now.getFullYear() + 1; y++) {
+          const o = document.createElement("option");
+          o.value = String(y); o.textContent = String(y);
+          if (y === now.getFullYear()) o.selected = true;
+          ySel.appendChild(o);
+        }
+        const ta = document.getElementById("seedWebs");
+        const cnt = document.getElementById("seedWebCount");
+        if (ta && cnt) {
+          const upd = () => {
+            const n = seedWebList().length;
+            const t = translations[currentLang];
+            cnt.textContent = n + " " + ((t && t.seedCountUnit) || "client names");
+          };
+          ta.addEventListener("input", upd);
+          upd();
+        }
+      }
+      document.addEventListener("DOMContentLoaded", seedInitSelects);
 
       function debounce(fn, delay) {
         let timeout;
