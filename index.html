@@ -478,6 +478,21 @@
         accent-color: var(--accent);
       }
 
+      #seedPanel .seed-log {
+        margin-top: 12px;
+        padding: 12px;
+        max-height: 320px;
+        overflow: auto;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.75rem;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--text-secondary);
+      }
       #seedPanel .seed-source {
         padding: 14px;
         margin-bottom: 16px;
@@ -2179,6 +2194,40 @@
                   </div>
                 </section>
 
+                <section class="seed-step">
+                  <h3 class="seed-step-title"><span class="seed-step-no">5</span><span data-i18n="seedStepReady">Get the month ready for Income Report</span></h3>
+                  <p class="form-hint" data-i18n="seedReadyHint">Runs against the accounting system you picked in step 3.</p>
+                  <div class="form-grid-2">
+                    <label class="checkbox-label">
+                      <input type="checkbox" id="seedPipeMock" checked />
+                      <span data-i18n="seedPipeMockLabel">1 Seed this mock first</span>
+                    </label>
+                    <label class="checkbox-label">
+                      <input type="checkbox" id="seedPipeIssue" checked />
+                      <span data-i18n="seedPipeIssueLabel">2 Issue invoices for every customer</span>
+                    </label>
+                    <label class="checkbox-label">
+                      <input type="checkbox" id="seedPipeWl" checked />
+                      <span data-i18n="seedPipeWlLabel">3 Pull win/lose</span>
+                    </label>
+                    <label class="checkbox-label">
+                      <input type="checkbox" id="seedPipeSweep" checked />
+                      <span data-i18n="seedPipeSweepLabel">4 Delete zero-amount drafts</span>
+                    </label>
+                    <label class="checkbox-label">
+                      <input type="checkbox" id="seedPipeStatus" checked />
+                      <span data-i18n="seedPipeStatusLabel">5 Walk statuses for every product</span>
+                    </label>
+                  </div>
+                  <div class="seed-actions">
+                    <button type="button" class="btn btn-primary" id="seedPipeBtn" onclick="seedPrepareMonth()" data-i18n="seedPipeBtn">Get the month ready</button>
+                    <button type="button" class="btn btn-secondary" id="seedPipeStopBtn" onclick="seedPipeStop()" style="display:none" data-i18n="seedPipeStopBtn">Stop</button>
+                    <span class="seed-actions-sep"></span>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="seedCountStatuses()" data-i18n="seedCountBtn">Count by status</button>
+                  </div>
+                  <pre class="seed-log" id="seedPipeLog" style="display:none"></pre>
+                </section>
+
                 <div class="response-panel" id="seedResponse" style="display:none">
                   <div class="response-header">
                     <div class="response-status" id="seedStatus"></div>
@@ -2433,6 +2482,16 @@
           seedOneClickBtn: "Fetch and create",
           seedErrNoToken: "Paste the token first",
           seedFetching: "Reading the accounting system",
+          seedStepReady: "Get the month ready for Income Report",
+          seedReadyHint: "Runs against the accounting system you picked in step 3. Takes a few minutes for a full month.",
+          seedPipeMockLabel: "1 Seed this mock first",
+          seedPipeIssueLabel: "2 Issue invoices for every customer",
+          seedPipeWlLabel: "3 Pull win/lose",
+          seedPipeSweepLabel: "4 Delete zero-amount drafts",
+          seedPipeStatusLabel: "5 Walk statuses for every product",
+          seedPipeBtn: "Get the month ready",
+          seedPipeStopBtn: "Stop",
+          seedCountBtn: "Count by status",
           seedAmountMode: "Amount mode",
           seedModeFixed: "Same for everyone",
           seedModeStep: "Step up (x1, x2, x3 ...)",
@@ -2650,6 +2709,16 @@
           seedOneClickBtn: "ดึงแล้วสร้างเลย",
           seedErrNoToken: "ใส่โทเคนก่อน",
           seedFetching: "กำลังอ่านข้อมูลจากระบบบัญชี",
+          seedStepReady: "เตรียมเดือนนี้ให้พร้อมเทส Income Report",
+          seedReadyHint: "ยิงเข้าระบบบัญชีที่เลือกไว้ในขั้นที่ 3 · ทั้งเดือนใช้เวลาไม่กี่นาที",
+          seedPipeMockLabel: "1 ใส่ข้อมูลลง mock ตัวนี้ก่อน",
+          seedPipeIssueLabel: "2 ออกบิลให้ลูกค้าทุกราย",
+          seedPipeWlLabel: "3 ดึงผลแพ้ชนะ",
+          seedPipeSweepLabel: "4 ลบใบร่างที่ยอดเป็น 0",
+          seedPipeStatusLabel: "5 เดินสถานะให้ครบทุกสินค้า",
+          seedPipeBtn: "เตรียมเดือนนี้ให้พร้อม",
+          seedPipeStopBtn: "หยุด",
+          seedCountBtn: "นับตามสถานะ",
           seedAmountMode: "รูปแบบยอด",
           seedModeFixed: "เท่ากันทุกราย",
           seedModeStep: "ไล่ระดับ (x1, x2, x3 ...)",
@@ -4121,6 +4190,8 @@
         if (e && e.message === "badAmount") return t.seedErrAmount || "Amount must be a number";
         if (e && e.message === "noToken") return t.seedErrNoToken || "Paste the token first";
         if (e && e.message === "badHost") return "host is not in the allowlist";
+        if (e && e.message === "noCrypto") return "ไม่มี crypto address ที่ active+APPROVED";
+        if (e && e.message === "slipFailed") return "อัปโหลดสลิปไม่สำเร็จ";
         return String(e && e.message ? e.message : e);
       }
 
@@ -4348,6 +4419,353 @@
             : (t.seedExistingNone || "empty");
           el.style.color = n ? "var(--warning)" : "var(--text-muted)";
         } catch (e) { el.textContent = ""; }
+      }
+
+
+      // ═══ เตรียมทั้งเดือนให้พร้อมเทส Income Report ═══
+      // ตรรกะยกมาจาก runs/ACC-2079/scripts/seed_month.py + seed_statuses.py
+      // กฎที่แลกมาด้วยการลองผิดลองถูก — อย่าแก้ออก:
+      //   ก. อ่านรายการบิลด้วย limit=50 เท่านั้น limit ใหญ่ทำให้ API timeout
+      //   ข. AUTO_PLAY เดือนต้องเติมศูนย์ ("02") ส่วน confirm-wl ไม่ต้อง
+      //   ค. PUT /v1/product ต้องส่ง type เดิมไปด้วย ไม่งั้น 4008
+      //   ง. DELIVERED บังคับ crypto_id ที่ active+APPROVED
+      //   จ. จ่ายเงินต้องหยิบสกุล CRYPTO ไม่ใช่แถวแรก (แถวแรกเป็น THB เสมอ)
+      //   ฉ. HTTP 200 ไม่ได้แปลว่าสถานะเปลี่ยน ต้องอ่านกลับมายืนยันทุกก้าว
+      const SEED_LIST_LIMIT = 50;
+      const SEED_ISSUE_BATCH = 20;
+      const SEED_PIPE = { stop: false, running: false };
+      const SEED_SNAPSHOT_PULL = ["AUTO", "SPORT_BOOK_V2"];
+      const SEED_STATUS_PATHS = {
+        PENDING:       ["PENDING"],
+        DELIVERED:     ["PENDING", "DELIVERED"],
+        VOID:          ["PENDING", "VOID"],
+        CANCEL:        ["PENDING", "DELIVERED", "CANCEL"],
+        VERIFYPAYMENT: ["PENDING", "DELIVERED", "VERIFYPAYMENT"],
+        PARTIALPAID:   ["PENDING", "DELIVERED", "VERIFYPAYMENT", "PARTIALPAID"],
+        PAID:          ["PENDING", "DELIVERED", "VERIFYPAYMENT", "PAID"],
+        REFUND:        ["PENDING", "DELIVERED", "VERIFYPAYMENT", "PAID", "REFUND"],
+      };
+      const SEED_ALL_STATUSES = ["DRAFT", "PENDING", "DELIVERED", "VERIFYPAYMENT",
+        "PARTIALPAID", "PAID", "REFUND", "CANCEL", "VOID", "OVERDUE", "REVIEW", "EXCEED"];
+      const SEED_NEEDS_SLIP = ["VERIFYPAYMENT", "PAID", "PARTIALPAID"];
+      const SEED_NEEDS_MONEY = ["PAID", "PARTIALPAID", "REFUND"];
+
+      function seedPipeStop() {
+        SEED_PIPE.stop = true;
+        seedLog("ขอหยุด — จะจบหลังจากงานที่ค้างอยู่เสร็จ");
+      }
+
+      function seedLog(line) {
+        const el = document.getElementById("seedPipeLog");
+        if (!el) return;
+        el.style.display = "block";
+        el.textContent += (el.textContent ? "\n" : "") + line;
+        el.scrollTop = el.scrollHeight;
+      }
+
+      function seedPipeBusy(on) {
+        SEED_PIPE.running = on;
+        const b = document.getElementById("seedPipeBtn");
+        const st = document.getElementById("seedPipeStopBtn");
+        if (b) b.disabled = on;
+        if (st) st.style.display = on ? "" : "none";
+      }
+
+      async function seedAccSend(base, token, method, path, body) {
+        const headers = { Authorization: "Bearer " + token };
+        if (body !== undefined) headers["Content-Type"] = "application/json";
+        const res = await fetch(base + path, {
+          method, headers,
+          body: body === undefined ? undefined : JSON.stringify(body),
+        });
+        let j = null;
+        try { j = await res.json(); } catch (e) { /* บาง endpoint ไม่คืน body */ }
+        return { ok: res.ok, st: res.status, j };
+      }
+
+      // ── อ่านข้อมูลพื้นฐาน ──
+      async function seedAccProducts(base, token) {
+        const j = await seedAccGet(base, token, "/v1/product/search?page=1&limit=300");
+        return ((j.data && j.data.products) || []).filter(p => p.active && !p.is_delete);
+      }
+
+      async function seedAccInvoices(base, token, month, year, status) {
+        const out = [];
+        for (let page = 1; page <= 40; page++) {
+          if (SEED_PIPE.stop) break;
+          const q = `/v2/billing-note/all?page=${page}&limit=${SEED_LIST_LIMIT}` +
+                    `&year=${year}&month=${month}` + (status ? `&status=${status}` : "");
+          const j = await seedAccGet(base, token, q);
+          const b = j.data || [];
+          out.push(...b);
+          if (b.length < SEED_LIST_LIMIT) break;
+        }
+        return out;
+      }
+
+      // ── ขั้นตอน ──
+      async function seedPipeIssueBills(ctx) {
+        const { base, token, month, year } = ctx;
+        const have = new Set((await seedAccInvoices(base, token, month, year)).map(i => i.username));
+        let all = [];
+        for (let page = 1; page <= 40; page++) {
+          const j = await seedAccGet(base, token, `/v1/customer/search?page=${page}&limit=100`);
+          const b = (j.data && j.data.customers) || [];
+          all = all.concat(b);
+          if (b.length < 100) break;
+        }
+        const todo = all.filter(c => (c.customer_product_list || []).length && !have.has(c.username));
+        let ok = 0;
+        for (let i = 0; i < todo.length; i += SEED_ISSUE_BATCH) {
+          if (SEED_PIPE.stop) break;
+          const chunk = todo.slice(i, i + SEED_ISSUE_BATCH);
+          const r = await seedAccSend(base, token, "POST", "/v1/billing-note", {
+            type: "SINGLE",
+            start_month: `${year}-${String(month).padStart(2, "0")}-01T00:00:00Z`,
+            customer_id: chunk.map(c => c.id),
+          });
+          if (r.ok) ok += chunk.length;
+          seedLog(`   ออกบิลแล้ว ${ok}/${todo.length}`);
+        }
+        return `ออกบิลใหม่ ${ok} ราย · มีบิลอยู่แล้ว ${have.size} ราย`;
+      }
+
+      async function seedPipePullWl(ctx) {
+        const { base, token, month, year } = ctx;
+        const mockUrl = location.origin + "/api/v1/ext/winloseEsByMonthMulti";
+        const targets = (await seedAccProducts(base, token))
+          .filter(p => SEED_SNAPSHOT_PULL.includes(p.type));
+        let ok = 0;
+        for (const p of targets) {
+          if (SEED_PIPE.stop) break;
+          const cur = (await seedAccGet(base, token, "/v1/product/" + p.id)).data || {};
+          const wl = Object.assign({}, cur.wlsnapshot_data || {});
+          if (wl.url !== mockUrl) {
+            wl.url = mockUrl;
+            await seedAccSend(base, token, "PUT", "/v1/product/" + p.id, {
+              product_name: cur.product_name, product_name_preview: cur.product_name_preview,
+              description: cur.description, active: cur.active, discounts: cur.discounts,
+              form_link: cur.form_link, type: cur.type, tag: cur.tag,   // ข้อ ค
+              price: cur.price, price_usdt: cur.price_usdt,
+              default_status: cur.default_status, wlsnapshot_data: wl,
+            });
+          }
+          const r = await seedAccSend(base, token, "POST", "/v1/pm/confirm-wl",
+            { product_id: p.id, month: String(month), year: String(year), prefix: "" });
+          if (r.ok) ok++;
+          seedLog(`   ดึงผล ${cur.product_name || p.product_name} → ${r.st}`);
+        }
+        return `ดึงผลแพ้ชนะ ${ok}/${targets.length} สินค้า (ระบบคำนวณต่อเบื้องหลัง)`;
+      }
+
+      async function seedPipeAutoplay(ctx) {
+        const { base, token, month, year, amount } = ctx;
+        const ap = (await seedAccProducts(base, token)).filter(p => p.type === "AUTO_PLAY");
+        const byName = new Map(ap.map(p => [p.product_name_preview || p.product_name, p.id]));
+        const want = new Map();
+        for (const i of await seedAccInvoices(base, token, month, year, "DRAFT")) {
+          for (const w of i.product_wl || []) {
+            if (w.wl_status === "SUCCESS") continue;
+            const pid = byName.get(w.product_name);
+            const pfx = (w.prefix_name || "").trim();
+            if (!pid || !pfx) continue;
+            if (!want.has(pid)) want.set(pid, new Set());
+            want.get(pid).add(pfx);
+          }
+        }
+        let sent = 0;
+        for (const [pid, set] of want) {
+          if (SEED_PIPE.stop) break;
+          const records = [...set].map(prefix => ({
+            product_type_id: pid, auto_product: "", winlose: amount, prefix,
+            data: { note: "[seed-month]" },
+            month: String(month).padStart(2, "0"), year: String(year),   // ข้อ ข
+          }));
+          const r = await seedAccSend(base, token, "POST", "/v1/autoplay", { records });
+          if (r.ok) sent += records.length;
+        }
+        return `ใส่ผล AUTO_PLAY ${sent} prefix`;
+      }
+
+      async function seedPipeSweepZero(ctx) {
+        const { base, token, month, year } = ctx;
+        const doomed = (await seedAccInvoices(base, token, month, year, "DRAFT"))
+          .filter(i => (i.total_payment_crypto || 0) === 0);
+        let ok = 0;
+        for (const i of doomed) {
+          if (SEED_PIPE.stop) break;
+          const r = await seedAccSend(base, token, "DELETE", "/v1/billing-note/" + i.id);
+          if (r.ok) ok++;
+        }
+        return `ลบใบร่างยอด 0 ทิ้ง ${ok}/${doomed.length} ใบ`;
+      }
+
+      // ── เดินสถานะ ──
+      async function seedActiveCrypto(base, token) {
+        const rows = (await seedAccGet(base, token, "/v1/crypto-address/active")).data || [];
+        const hit = rows.find(r => r.is_active && r.status === "APPROVED");
+        if (!hit) throw new Error("noCrypto");     // ข้อ ง
+        return hit.id;
+      }
+
+      async function seedCurrencyFor(base, token, invId) {
+        const rows = (await seedAccGet(base, token,
+          `/v1/billing-note/currency?invoice_id=${invId}&customer_id=`)).data || [];
+        const cry = rows.find(r => r.currency_type === "CRYPTO") || rows[0];   // ข้อ จ
+        return cry && cry.currency_id;
+      }
+
+      async function seedUploadSlip(base, token) {
+        const b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+        const bin = atob(b64), arr = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        const fd = new FormData();
+        fd.append("file", new Blob([arr], { type: "image/png" }), "seed-month-slip.png");
+        const res = await fetch(base + "/v1/system-file/invoice/slip",
+          { method: "POST", headers: { Authorization: "Bearer " + token }, body: fd });
+        const j = await res.json();
+        const d = (j && j.data) || {};
+        if (!d.file_path || !d.created_at) throw new Error("slipFailed");
+        return { file_path: d.file_path, file_name: d.file_name, file_ext: d.file_ext || ".png",
+                 file_size: arr.length, file_name_preview: d.file_name,
+                 created_by: "", updated_by: "",
+                 created_at: d.created_at, updated_at: d.updated_at };
+      }
+
+      function seedMoneyAmount(status, inv) {
+        const owed = Math.abs(Number(inv.total_paid_crypto || 0));
+        const total = Math.abs(Number(inv.total_payment_crypto || 0));
+        if (status === "PARTIALPAID") return Math.round(owed / 2 * 100) / 100 || 0.01;
+        if (status === "PAID") return Math.round(owed * 100) / 100;
+        return Math.round(total * 100) / 100;
+      }
+
+      async function seedWalk(ctx, invId, target) {
+        const { base, token } = ctx;
+        let slip = null;   // อัปครั้งเดียวต่อใบ — BE เก็บไฟล์เฉพาะตอน VERIFYPAYMENT
+        for (const step of SEED_STATUS_PATHS[target]) {
+          if (SEED_PIPE.stop) return null;
+          const inv = (await seedAccGet(base, token, "/v1/billing-note/" + invId)).data || {};
+          const body = { invoice_id: invId, status: step, old_status: inv.status || "",
+                         note: "[seed-month]", cause: "" };
+          if (step === "DELIVERED") body.crypto_id = [ctx.cryptoId];
+          if (SEED_NEEDS_SLIP.includes(step)) {
+            if (!slip) slip = await seedUploadSlip(base, token);
+            body.files = [slip];
+          }
+          if (SEED_NEEDS_MONEY.includes(step)) {
+            body.currency_id = await seedCurrencyFor(base, token, invId);
+            body.payment_type = "CASH";
+            body.amount = seedMoneyAmount(step, inv);
+          }
+          const r = await seedAccSend(base, token, "PUT", "/v1/billing-note/" + invId, body);
+          if (!r.ok) return { step, st: r.st, msg: (r.j && r.j.message) || "" };
+          const now = (await seedAccGet(base, token, "/v1/billing-note/" + invId)).data || {};
+          if (now.status !== step) return { step, st: 200, msg: `ตอบ 200 แต่สถานะเป็น ${now.status}` };  // ข้อ ฉ
+        }
+        return null;
+      }
+
+      // จัดใบให้ทุกสินค้าได้ครบทุกสถานะ — สถานะปลายทางกินใบถาวร ใช้ซ้ำไม่ได้
+      function seedPlanByProduct(rows, statuses) {
+        const used = new Set(), plan = [];
+        for (const st of statuses) {
+          const covered = new Set();
+          for (const r of rows) {
+            if (used.has(r.id)) continue;
+            const names = (r.product_wl || []).map(w => w.product_name);
+            const fresh = names.filter(n => !covered.has(n));
+            if (!fresh.length) continue;
+            used.add(r.id);
+            fresh.forEach(n => covered.add(n));
+            plan.push({ id: r.id, status: st, products: fresh });
+          }
+        }
+        return plan;
+      }
+
+      async function seedPipeStatuses(ctx) {
+        const { base, token, month, year } = ctx;
+        ctx.cryptoId = await seedActiveCrypto(base, token);
+        const ready = (await seedAccInvoices(base, token, month, year, "DRAFT")).filter(i => {
+          const wl = i.product_wl || [];
+          return wl.length && wl.every(w => w.wl_status === "SUCCESS")
+            && (i.total_payment_crypto || 0) !== 0;
+        });
+        const plan = seedPlanByProduct(ready, Object.keys(SEED_STATUS_PATHS));
+        seedLog(`   ใบที่พร้อมเดิน ${ready.length} · จะเดิน ${plan.length} ใบ`);
+        let ok = 0, fail = 0;
+        for (const p of plan) {
+          if (SEED_PIPE.stop) break;
+          const err = await seedWalk(ctx, p.id, p.status);
+          if (err) { fail++; seedLog(`   ✗ ${p.status} ${p.id.slice(-6)} · ${err.step} ${err.st} ${err.msg}`); }
+          else { ok++; seedLog(`   ✓ ${p.status} ${p.id.slice(-6)} · ${p.products.join(", ")}`); }
+        }
+        return `เดินสถานะสำเร็จ ${ok} ใบ · ไม่สำเร็จ ${fail} ใบ`;
+      }
+
+      async function seedCountStatuses() {
+        try {
+          const base = seedApiBase(), token = seedTokenValue();
+          const month = document.getElementById("seedMonth").value;
+          const year = document.getElementById("seedYear").value;
+          const counts = {};
+          for (const st of SEED_ALL_STATUSES) {
+            const j = await seedAccGet(base, token,
+              `/v2/billing-note/all?page=1&limit=1&year=${year}&month=${month}&status=${st}`);
+            counts[st] = (j.pagination && j.pagination.total) || 0;
+          }
+          seedShow("success", `${month}/${year}`, counts);
+        } catch (e) {
+          seedShow("error", seedErrText(e), {});
+        }
+      }
+
+      async function seedPrepareMonth() {
+        if (SEED_PIPE.running) return;
+        const on = (id) => { const el = document.getElementById(id); return el && el.checked; };
+        let ctx;
+        try {
+          ctx = {
+            base: seedApiBase(), token: seedTokenValue(),
+            month: String(parseInt(document.getElementById("seedMonth").value, 10)),
+            year: document.getElementById("seedYear").value,
+            amount: parseFloat(document.getElementById("seedAmount").value),
+          };
+          if (isNaN(ctx.amount)) throw new Error("badAmount");
+        } catch (e) {
+          seedShow("error", seedErrText(e), {});
+          return;
+        }
+        SEED_PIPE.stop = false;
+        seedPipeBusy(true);
+        const log = document.getElementById("seedPipeLog");
+        if (log) log.textContent = "";
+        seedLog(`เริ่ม ${ctx.month}/${ctx.year} · ${ctx.base}`);
+        const steps = [
+          ["seedPipeMock",   "ใส่ข้อมูลลง mock",   async () => { await seedRun(); return "เสร็จ"; }],
+          ["seedPipeIssue",  "ออกบิล",             seedPipeIssueBills],
+          ["seedPipeWl",     "ดึงผลแพ้ชนะ",        seedPipePullWl],
+          ["seedPipeWl",     "ใส่ผล AUTO_PLAY",    seedPipeAutoplay],
+          ["seedPipeSweep",  "ลบใบยอด 0",          seedPipeSweepZero],
+          ["seedPipeStatus", "เดินสถานะ",           seedPipeStatuses],
+        ];
+        try {
+          for (const [flag, name, fn] of steps) {
+            if (SEED_PIPE.stop) { seedLog("หยุดตามคำสั่ง"); break; }
+            if (!on(flag)) { seedLog(`ข้าม ${name}`); continue; }
+            seedLog(`\n▶ ${name}`);
+            seedLog("   " + await fn(ctx));
+          }
+          seedLog("\nเสร็จแล้ว — กด \"นับตามสถานะ\" เพื่อดูผล");
+          showToast("success", translations[currentLang].seedPipeBtn || "ready",
+            `${ctx.month}/${ctx.year}`);
+        } catch (e) {
+          seedLog("\nพัง: " + (e && e.message ? e.message : String(e)));
+          seedShow("error", seedErrText(e), {});
+        } finally {
+          seedPipeBusy(false);
+        }
       }
 
       function debounce(fn, delay) {
