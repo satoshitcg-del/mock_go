@@ -436,6 +436,27 @@
         gap: 10px;
         margin: 18px 0 4px;
       }
+      #seedPanel .seed-source {
+        padding: 14px;
+        margin-bottom: 16px;
+        border: 1px dashed var(--border);
+        border-radius: var(--radius);
+        background: var(--bg-secondary);
+      }
+      #seedPanel .seed-source-head {
+        margin-bottom: 12px;
+      }
+      #seedPanel .seed-source-head strong {
+        display: block;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+      }
+      #seedPanel .seed-progress {
+        margin-top: 10px;
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
       #seedPanel textarea {
         width: 100%;
         font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -1991,6 +2012,36 @@
                   </div>
                 </div>
 
+                <div class="seed-source">
+                  <div class="seed-source-head">
+                    <strong data-i18n="seedSourceTitle">Pull the names from the accounting system</strong>
+                    <span class="form-hint" data-i18n="seedSourceHint">The token stays in this browser tab only. It is never sent anywhere except the host you pick below.</span>
+                  </div>
+                  <div class="form-grid">
+                    <div class="form-group">
+                      <label data-i18n="seedApiHost">Accounting API</label>
+                      <select id="seedApiHost">
+                        <option value="https://apixint-dev.askmebill.com">dev</option>
+                        <option value="https://apixint-sit.askmebill.com">sit</option>
+                        <option value="https://apixint-uat.askmebill.com">uat</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label data-i18n="seedToken">Token (cookie TOKEN from the BO)</label>
+                      <input type="password" id="seedToken" placeholder="eyJ..." autocomplete="off" />
+                    </div>
+                  </div>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="seedRememberToken" />
+                    <span data-i18n="seedRememberLabel">Keep the token until I close this tab</span>
+                  </label>
+                  <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="seedFetchNames()" data-i18n="seedFetchBtn">Fetch client names</button>
+                    <button type="button" class="btn btn-primary" onclick="seedFetchAndRun()" data-i18n="seedOneClickBtn">Fetch and create</button>
+                  </div>
+                  <div class="seed-progress" id="seedProgress" style="display:none"></div>
+                </div>
+
                 <div class="form-group">
                   <label data-i18n="seedWebs">Client names — one per line, or comma separated</label>
                   <textarea id="seedWebs" rows="7" placeholder="ambking&#10;lazagame&#10;iprobetv2"></textarea>
@@ -2260,6 +2311,15 @@
           seedErrNoWebs: "Add at least one client name",
           seedErrAmount: "Amount must be a number",
           seedCountUnit: "client names",
+          seedSourceTitle: "Pull the names from the accounting system",
+          seedSourceHint: "The token stays in this browser tab only. It is never sent anywhere except the host you pick below.",
+          seedApiHost: "Accounting API",
+          seedToken: "Token (cookie TOKEN from the BO)",
+          seedRememberLabel: "Keep the token until I close this tab",
+          seedFetchBtn: "Fetch client names",
+          seedOneClickBtn: "Fetch and create",
+          seedErrNoToken: "Paste the token first",
+          seedFetching: "Reading the accounting system",
           navConfiguration: "Configuration",
           navSettings: "Settings",
           
@@ -2455,6 +2515,15 @@
           seedErrNoWebs: "ใส่ client name อย่างน้อยหนึ่งตัว",
           seedErrAmount: "ยอดต้องเป็นตัวเลข",
           seedCountUnit: "ชื่อ",
+          seedSourceTitle: "ดึงรายชื่อจากระบบบัญชี",
+          seedSourceHint: "โทเคนอยู่ในแท็บนี้เท่านั้น และถูกส่งไปที่ host ที่เลือกด้านล่างที่เดียว",
+          seedApiHost: "ระบบบัญชี",
+          seedToken: "โทเคน (cookie TOKEN จากหน้า BO)",
+          seedRememberLabel: "จำโทเคนไว้จนกว่าจะปิดแท็บ",
+          seedFetchBtn: "ดึงรายชื่อ",
+          seedOneClickBtn: "ดึงแล้วสร้างเลย",
+          seedErrNoToken: "ใส่โทเคนก่อน",
+          seedFetching: "กำลังอ่านข้อมูลจากระบบบัญชี",
           navConfiguration: "การตั้งค่า",
           navSettings: "ตั้งค่า",
           
@@ -3895,6 +3964,8 @@
         const t = translations[currentLang];
         if (e && e.message === "noWebs") return t.seedErrNoWebs || "Add at least one client name";
         if (e && e.message === "badAmount") return t.seedErrAmount || "Amount must be a number";
+        if (e && e.message === "noToken") return t.seedErrNoToken || "Paste the token first";
+        if (e && e.message === "badHost") return "host is not in the allowlist";
         return String(e && e.message ? e.message : e);
       }
 
@@ -3960,6 +4031,10 @@
         }
         const ta = document.getElementById("seedWebs");
         const cnt = document.getElementById("seedWebCount");
+        try {                                   // เติมรายชื่อที่เคยดึงไว้ให้อัตโนมัติ
+          const cached = JSON.parse(localStorage.getItem("seedNamesCache") || "[]");
+          if (ta && !ta.value.trim() && cached.length) ta.value = cached.join("\n");
+        } catch (e) {}
         if (ta && cnt) {
           const upd = () => {
             const n = seedWebList().length;
@@ -3971,6 +4046,117 @@
         }
       }
       document.addEventListener("DOMContentLoaded", seedInitSelects);
+
+
+      // ═══ ดึง client_name จากระบบบัญชีมาให้เอง ═══
+      // โทเคนอยู่ในหน่วยความจำของแท็บนี้เท่านั้น ไม่เขียนลง localStorage และส่งไปที่ host ใน allowlist เท่านั้น
+      const SEED_API_ALLOW = [
+        "https://apixint-dev.askmebill.com",
+        "https://apixint-sit.askmebill.com",
+        "https://apixint-uat.askmebill.com",
+      ];
+      // สินค้าที่ต้องใช้ client_name (ตัวที่ดึงแพ้ชนะผ่าน snapshot)
+      const SEED_SNAPSHOT_TYPES = ["AUTO", "SPORT_BOOK_V2", "SUPER_API", "CHNAOT_THAI"];
+
+      function seedProgress(text) {
+        const el = document.getElementById("seedProgress");
+        if (!el) return;
+        el.style.display = text ? "block" : "none";
+        el.textContent = text || "";
+      }
+
+      function seedApiBase() {
+        const v = document.getElementById("seedApiHost").value;
+        if (!SEED_API_ALLOW.includes(v)) throw new Error("badHost");
+        return v;
+      }
+
+      function seedTokenValue() {
+        const el = document.getElementById("seedToken");
+        let t = (el.value || "").trim();
+        if (!t && sessionStorage.getItem("seedToken")) {
+          t = sessionStorage.getItem("seedToken");
+          el.value = t;
+        }
+        if (!t) throw new Error("noToken");
+        if (document.getElementById("seedRememberToken").checked) {
+          sessionStorage.setItem("seedToken", t);
+        } else {
+          sessionStorage.removeItem("seedToken");
+        }
+        return t;
+      }
+
+      async function seedAccGet(base, token, path) {
+        const res = await fetch(base + path, { headers: { Authorization: "Bearer " + token } });
+        if (!res.ok) throw new Error("HTTP " + res.status + " " + path);
+        return res.json();
+      }
+
+      async function seedCollectNames() {
+        const base = seedApiBase();
+        const token = seedTokenValue();
+        const t = translations[currentLang];
+
+        seedProgress((t.seedFetching || "reading") + " · customers…");
+        let all = [];
+        for (let page = 1; page <= 40; page++) {
+          const j = await seedAccGet(base, token, `/v1/customer/search?page=${page}&limit=100`);
+          const batch = (j.data && j.data.customers) || [];
+          all = all.concat(batch);
+          seedProgress(`${t.seedFetching || "reading"} · customers ${all.length}`);
+          if (batch.length < 100) break;
+        }
+
+        const j2 = await seedAccGet(base, token, "/v1/product/search?page=1&limit=300");
+        const wanted = new Set(((j2.data && j2.data.products) || [])
+          .filter(p => p.active && !p.is_delete && SEED_SNAPSHOT_TYPES.includes(p.type))
+          .map(p => p.id));
+
+        const targets = all.filter(c =>
+          (c.customer_product_list || []).some(cp => wanted.has(cp.product_id)));
+
+        const names = new Set();
+        for (let i = 0; i < targets.length; i++) {
+          const c = targets[i];
+          try {
+            const j3 = await seedAccGet(base, token,
+              `/v1/customer-product/all?page=1&limit=200&customer_id=${c.id}`);
+            for (const cp of (j3.data || [])) {
+              if (!wanted.has(cp.product_id)) continue;
+              const cn = (cp.client_name || "").trim();
+              if (cn) names.add(cn);
+            }
+          } catch (e) { /* ลูกค้ารายนี้อ่านไม่ได้ ข้ามไป ไม่ให้ทั้งงานล้ม */ }
+          if (i % 10 === 0 || i === targets.length - 1) {
+            seedProgress(`${t.seedFetching || "reading"} · ${i + 1}/${targets.length} · ${names.size} names`);
+          }
+        }
+        seedProgress(`${names.size} client names · ${targets.length} customers`);
+        try { localStorage.setItem("seedNamesCache", JSON.stringify([...names])); } catch (e) {}
+        return [...names].sort();
+      }
+
+      async function seedFetchNames() {
+        try {
+          const names = await seedCollectNames();
+          const ta = document.getElementById("seedWebs");
+          ta.value = names.join("\n");
+          ta.dispatchEvent(new Event("input"));
+          seedShow("success", `${names.length} client names`, names);
+          return names;
+        } catch (e) {
+          seedProgress("");
+          seedShow("error", seedErrText(e), {});
+          return null;
+        }
+      }
+
+      async function seedFetchAndRun() {
+        const names = await seedFetchNames();
+        if (!names || !names.length) return;
+        await seedRun();
+      }
 
       function debounce(fn, delay) {
         let timeout;
