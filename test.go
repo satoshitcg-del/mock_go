@@ -852,6 +852,39 @@ func withCORS(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+// superAPILoginHandler — POST {SUPER_API_URL}/session/login (core/services/user.go:2403-2442 @b2437cc)
+// BE ต้องการ: HTTP 2xx + success=true + data.token != "" — field อื่นอ่านแค่ username (log)
+func superAPILoginHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	recordTrace(traceEntry{Method: r.Method, Path: r.URL.Path, Headers: pickHeaders(r)})
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"data": map[string]interface{}{
+			"mainUsername": "mockmain", "username": "mockuser", "name": "Mock User",
+			"roles": []string{"company"}, "currency": "THB", "information": map[string]interface{}{},
+			"status": "ACTIVE", "marquee": "", "token": "mock-token-qa",
+		},
+	})
+}
+
+// superAPICompanyHandler — GET {SUPER_API_URL}/account/getListChildrenByUsername/company
+// (core/services/user.go:2466-2526 @b2437cc) ใช้โดย FE autocomplete เลือก client_name
+func superAPICompanyHandler(w http.ResponseWriter, r *http.Request) {
+	recordTrace(traceEntry{Method: r.Method, Path: r.URL.Path, Headers: pickHeaders(r)})
+	companies := []map[string]interface{}{}
+	for _, u := range []string{"Uneed", "qacompany"} {
+		companies = append(companies, map[string]interface{}{
+			"_id": "mock-" + strings.ToLower(u), "roles": []string{"company"}, "username": u,
+			"level": "company", "status": "ACTIVE", "currency": "THB",
+		})
+	}
+	writeJSON(w, http.StatusOK, map[string]interface{}{"success": true, "data": companies})
+}
+
+
 func main() {
 	loadSeed()
 
@@ -864,6 +897,9 @@ func main() {
 	http.HandleFunc("/v1/pg/winlose", withCORS(pgWinloseHandler))
 	// SUPER_API ยิงแบบ GET + query param ไปที่ <url>/report/monthlyMemberWinLose
 	http.HandleFunc("/report/monthlyMemberWinLose", withCORS(superAPIHandler))
+	// SUPER_API login + company list (BE เรียกที่ env SUPER_API_URL — มีไว้เผื่อ env ชี้มาที่ mock)
+	http.HandleFunc("/session/login", withCORS(superAPILoginHandler))
+	http.HandleFunc("/account/getListChildrenByUsername/company", withCORS(superAPICompanyHandler))
 	http.HandleFunc("/api/v1/ext/snapshotAll", withCORS(snapshotAllHandler))
 	// ดูว่า caller ส่งอะไรมาจริง — ใช้ตอนหา key ที่ใช้จับคู่ไม่เจอ
 	http.HandleFunc("/api/v1/ext/lastRequests", withCORS(lastRequestsHandler))
