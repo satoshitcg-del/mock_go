@@ -1990,8 +1990,20 @@
                     <select id="seedYear"></select>
                   </div>
                   <div class="form-group">
+                    <label data-i18n="seedAmountMode">Amount mode</label>
+                    <select id="seedAmountMode" onchange="seedAmountModeChanged()">
+                      <option value="fixed" data-i18n="seedModeFixed">Same for everyone</option>
+                      <option value="step" data-i18n="seedModeStep">Step up (x1, x2, x3 …)</option>
+                      <option value="random" data-i18n="seedModeRandom">Random in a range</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
                     <label data-i18n="seedAmount">Amount (negative = customer owes)</label>
                     <input type="number" id="seedAmount" step="any" value="-63000" />
+                  </div>
+                  <div class="form-group" id="seedAmountMaxGroup" style="display:none">
+                    <label data-i18n="seedAmountMax">Up to</label>
+                    <input type="number" id="seedAmountMax" step="any" value="-500000" />
                   </div>
                   <div class="form-group">
                     <label data-i18n="seedUsername">Username</label>
@@ -2057,6 +2069,7 @@
                     <input type="checkbox" id="seedReplace" checked />
                     <span data-i18n="seedReplaceLabel">Delete this month first (replace instead of append)</span>
                   </label>
+                  <div class="form-hint" id="seedExisting"></div>
                 </div>
 
                 <div class="form-actions">
@@ -2320,6 +2333,14 @@
           seedOneClickBtn: "Fetch and create",
           seedErrNoToken: "Paste the token first",
           seedFetching: "Reading the accounting system",
+          seedAmountMode: "Amount mode",
+          seedModeFixed: "Same for everyone",
+          seedModeStep: "Step up (x1, x2, x3 ...)",
+          seedModeRandom: "Random in a range",
+          seedAmountMax: "Up to",
+          seedExistingSome: "This month already holds {n} rows — they will be deleted",
+          seedExistingNone: "This month is empty",
+          seedFetchSkipped: "{n} customers could not be read",
           navConfiguration: "Configuration",
           navSettings: "Settings",
           
@@ -2524,6 +2545,14 @@
           seedOneClickBtn: "ดึงแล้วสร้างเลย",
           seedErrNoToken: "ใส่โทเคนก่อน",
           seedFetching: "กำลังอ่านข้อมูลจากระบบบัญชี",
+          seedAmountMode: "รูปแบบยอด",
+          seedModeFixed: "เท่ากันทุกราย",
+          seedModeStep: "ไล่ระดับ (x1, x2, x3 ...)",
+          seedModeRandom: "สุ่มในช่วง",
+          seedAmountMax: "ถึง",
+          seedExistingSome: "เดือนนี้มีข้อมูลอยู่ {n} แถว — จะถูกลบ",
+          seedExistingNone: "เดือนนี้ยังไม่มีข้อมูล",
+          seedFetchSkipped: "อ่านลูกค้าไม่สำเร็จ {n} ราย",
           navConfiguration: "การตั้งค่า",
           navSettings: "ตั้งค่า",
           
@@ -2882,6 +2911,7 @@
           startAutoRefresh("manage");
         } else if (tab === "seed") {
           seedInitSelects();
+          seedCheckExisting();
         }
       }
 
@@ -3921,6 +3951,8 @@
         const month = document.getElementById("seedMonth").value;
         const year = document.getElementById("seedYear").value;
         const amount = parseFloat(document.getElementById("seedAmount").value);
+        const mode = document.getElementById("seedAmountMode").value;
+        const amountMax = parseFloat(document.getElementById("seedAmountMax").value);
         const username = document.getElementById("seedUsername").value.trim() || "superadmin";
         const currency = document.getElementById("seedCurrency").value.trim() || "THB";
         const preset = document.getElementById("seedPreset").value;
@@ -3928,16 +3960,29 @@
         if (!webs.length) throw new Error("noWebs");
         if (isNaN(amount)) throw new Error("badAmount");
 
-        const row = (web) => {
+        // ยอดต่อรายตามโหมด — ห้ามได้ 0 เพราะจะกลายเป็นใบ 0 บาทที่ป้ายเขียวแต่ใช้เทสไม่ได้
+        const amountFor = (i) => {
+          if (mode === "step") return round2(amount * (i + 1));
+          if (mode === "random") {
+            if (isNaN(amountMax)) throw new Error("badAmount");
+            const lo = Math.min(amount, amountMax), hi = Math.max(amount, amountMax);
+            return round2(lo + Math.random() * (hi - lo));
+          }
+          return amount;
+        };
+        const round2 = (n) => Math.round(n * 100) / 100;
+
+        const row = (web, i) => {
+          const a = amountFor(i) || amount;   // กันกรณีสุ่มได้ 0 พอดี
           const base = { username, web, prefix: "", currency };
           if (preset === "all") {
-            return { ...base, memberTotal: amount, memberWl: amount, invoiceAmt: amount,
+            return { ...base, memberTotal: a, memberWl: a, invoiceAmt: a,
                      betAmt: 0, validAmount: 0, memberComm: 0 };
           }
-          return { ...base, [preset]: amount };
+          return { ...base, [preset]: a };
         };
-        const data = webs.map(row);
-        if (document.getElementById("seedFallback").checked) data.push(row(""));
+        const data = webs.map((w, i) => row(w, i));
+        if (document.getElementById("seedFallback").checked) data.push(row("", 0));
         return { month, year, data };
       }
 
@@ -3989,6 +4034,7 @@
 
         seedShow(ins.ok ? "success" : "error",
           ins.ok ? `${body.data.length} rows · ${body.month}/${body.year}` : "failed", steps);
+        seedCheckExisting();
         if (ins.ok) showToast("success", translations[currentLang].seedRunBtn,
           `${body.data.length} · ${body.month}/${body.year}`);
       }
@@ -4036,6 +4082,10 @@
           if (ta && !ta.value.trim() && cached.length) ta.value = cached.join("\n");
         } catch (e) {}
         if (ta && cnt) {
+          mSel.addEventListener("change", seedCheckExisting);
+          ySel.addEventListener("change", seedCheckExisting);
+          seedAmountModeChanged();
+          seedCheckExisting();
           const upd = () => {
             const n = seedWebList().length;
             const t = translations[currentLang];
@@ -4117,6 +4167,7 @@
           (c.customer_product_list || []).some(cp => wanted.has(cp.product_id)));
 
         const names = new Set();
+        let skipped = 0;
         for (let i = 0; i < targets.length; i++) {
           const c = targets[i];
           try {
@@ -4127,12 +4178,17 @@
               const cn = (cp.client_name || "").trim();
               if (cn) names.add(cn);
             }
-          } catch (e) { /* ลูกค้ารายนี้อ่านไม่ได้ ข้ามไป ไม่ให้ทั้งงานล้ม */ }
+          } catch (e) { skipped++; }   // ไม่ให้ทั้งงานล้ม แต่ต้องรายงานว่าข้ามไปกี่ราย
           if (i % 10 === 0 || i === targets.length - 1) {
             seedProgress(`${t.seedFetching || "reading"} · ${i + 1}/${targets.length} · ${names.size} names`);
           }
         }
-        seedProgress(`${names.size} client names · ${targets.length} customers`);
+        const skipMsg = skipped
+          ? " · " + (t.seedFetchSkipped || "{n} failed").replace("{n}", skipped)
+          : "";
+        seedProgress(`${names.size} client names · ${targets.length} customers${skipMsg}`);
+        if (skipped) showToast("warning", t.seedFetchBtn || "fetch",
+          (t.seedFetchSkipped || "{n} failed").replace("{n}", skipped));
         try { localStorage.setItem("seedNamesCache", JSON.stringify([...names])); } catch (e) {}
         return [...names].sort();
       }
@@ -4156,6 +4212,32 @@
         const names = await seedFetchNames();
         if (!names || !names.length) return;
         await seedRun();
+      }
+
+
+      function seedAmountModeChanged() {
+        const mode = document.getElementById("seedAmountMode").value;
+        document.getElementById("seedAmountMaxGroup").style.display =
+          mode === "random" ? "" : "none";
+      }
+
+      // บอกก่อนว่าเดือนนี้มีอะไรอยู่ — ปุ่มเดียวจบไม่ควรลบของเงียบ ๆ
+      async function seedCheckExisting() {
+        const el = document.getElementById("seedExisting");
+        if (!el) return;
+        const month = document.getElementById("seedMonth").value;
+        const year = document.getElementById("seedYear").value;
+        const t = translations[currentLang];
+        try {
+          const res = await apiRequest("/api/v1/ext/snapshotAll", { method: "GET" });
+          const all = Array.isArray(res.data) ? res.data : (res.data && res.data.data) || [];
+          const n = all.filter(d => String(d.month) === String(month) && String(d.year) === String(year))
+                       .reduce((acc, d) => acc + ((d.data && d.data.length) || 1), 0);
+          el.textContent = n
+            ? (t.seedExistingSome || "{n} rows will be deleted").replace("{n}", n)
+            : (t.seedExistingNone || "empty");
+          el.style.color = n ? "var(--warning)" : "var(--text-muted)";
+        } catch (e) { el.textContent = ""; }
       }
 
       function debounce(fn, delay) {
