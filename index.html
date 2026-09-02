@@ -2218,11 +2218,24 @@
                       <input type="checkbox" id="seedPipeStatus" checked />
                       <span data-i18n="seedPipeStatusLabel">5 Walk statuses for every product</span>
                     </label>
+                    <label class="checkbox-label">
+                      <input type="checkbox" id="seedPipeOneTime" checked />
+                      <span data-i18n="seedPipeOneTimeLabel">6 Walk one-time bills</span>
+                    </label>
+                    <label class="checkbox-label">
+                      <input type="checkbox" id="seedPipeManual" checked />
+                      <span data-i18n="seedPipeManualLabel">7 Walk manual bills</span>
+                    </label>
+                    <label class="checkbox-label">
+                      <input type="checkbox" id="seedSlipMismatch" />
+                      <span data-i18n="seedSlipMismatchLabel">Also make some slips whose amount does not match</span>
+                    </label>
                   </div>
                   <div class="seed-actions">
                     <button type="button" class="btn btn-primary" id="seedPipeBtn" onclick="seedPrepareMonth()" data-i18n="seedPipeBtn">Get the month ready</button>
                     <button type="button" class="btn btn-secondary" id="seedPipeStopBtn" onclick="seedPipeStop()" style="display:none" data-i18n="seedPipeStopBtn">Stop</button>
                     <span class="seed-actions-sep"></span>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="seedPreviewSlip()" data-i18n="seedSlipPreviewBtn">Preview a slip</button>
                     <button type="button" class="btn btn-ghost btn-sm" onclick="seedCountStatuses()" data-i18n="seedCountBtn">Count by status</button>
                   </div>
                   <pre class="seed-log" id="seedPipeLog" style="display:none"></pre>
@@ -2491,6 +2504,10 @@
           seedPipeStatusLabel: "5 Walk statuses for every product",
           seedPipeBtn: "Get the month ready",
           seedPipeStopBtn: "Stop",
+          seedPipeOneTimeLabel: "6 Walk one-time bills",
+          seedPipeManualLabel: "7 Walk manual bills",
+          seedSlipMismatchLabel: "Also make some slips whose amount does not match the bill",
+          seedSlipPreviewBtn: "Preview a slip",
           seedCountBtn: "Count by status",
           seedAmountMode: "Amount mode",
           seedModeFixed: "Same for everyone",
@@ -2718,6 +2735,10 @@
           seedPipeStatusLabel: "5 เดินสถานะให้ครบทุกสินค้า",
           seedPipeBtn: "เตรียมเดือนนี้ให้พร้อม",
           seedPipeStopBtn: "หยุด",
+          seedPipeOneTimeLabel: "6 เดินสถานะบิลครั้งเดียว (ONE_TIME)",
+          seedPipeManualLabel: "7 เดินสถานะบิลกำหนดเอง (MANUAL)",
+          seedSlipMismatchLabel: "ทำสลิปที่ยอดไม่ตรงกับบิลปนมาด้วย (ไว้เทสว่าคนตรวจจับได้ไหม)",
+          seedSlipPreviewBtn: "ดูตัวอย่างสลิป",
           seedCountBtn: "นับตามสถานะ",
           seedAmountMode: "รูปแบบยอด",
           seedModeFixed: "เท่ากันทุกราย",
@@ -4615,19 +4636,18 @@
         return cry && cry.currency_id;
       }
 
-      async function seedUploadSlip(base, token) {
-        const b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
-        const bin = atob(b64), arr = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      async function seedUploadSlip(base, token, info) {
+        // วาดสลิปที่มียอดกับเลขบิลจริง ไม่ใช่ภาพเปล่า ⇒ เทสขั้นตอนตรวจสลิปได้
+        const blob = await seedSlipBlob(info || {});
         const fd = new FormData();
-        fd.append("file", new Blob([arr], { type: "image/png" }), "seed-month-slip.png");
+        fd.append("file", blob, `slip-${(info && info.invoiceNo) || "seed"}.png`);
         const res = await fetch(base + "/v1/system-file/invoice/slip",
           { method: "POST", headers: { Authorization: "Bearer " + token }, body: fd });
         const j = await res.json();
         const d = (j && j.data) || {};
         if (!d.file_path || !d.created_at) throw new Error("slipFailed");
         return { file_path: d.file_path, file_name: d.file_name, file_ext: d.file_ext || ".png",
-                 file_size: arr.length, file_name_preview: d.file_name,
+                 file_size: blob.size, file_name_preview: d.file_name,
                  created_by: "", updated_by: "",
                  created_at: d.created_at, updated_at: d.updated_at };
       }
@@ -4650,7 +4670,19 @@
                          note: "[seed-month]", cause: "" };
           if (step === "DELIVERED") body.crypto_id = [ctx.cryptoId];
           if (SEED_NEEDS_SLIP.includes(step)) {
-            if (!slip) slip = await seedUploadSlip(base, token);
+            if (!slip) {
+              const owed = Math.abs(Number(inv.total_paid_crypto || 0));
+              const wrong = document.getElementById("seedSlipMismatch")?.checked
+                            && Math.abs(hashCode(invId)) % 3 === 0;   // ปนมาราวหนึ่งในสาม
+              slip = await seedUploadSlip(base, token, {
+                invoiceNo: inv.invoice_no, customer: inv.name,
+                amount: wrong ? Math.round(owed * 1.07 * 100) / 100 : owed,
+                billAmount: owed, currency: "USDT", channel: "CASH",
+                ref: invId.slice(-8).toUpperCase(), mismatch: wrong,
+              });
+              // จดไว้ว่าใบไหนได้สลิปยอดไม่ตรง คนเทสจะได้เฉลยตัวเองได้หลังตรวจ
+              if (wrong) seedLog(`   ! สลิปของ ${inv.invoice_no || invId.slice(-6)} ยอดไม่ตรงกับบิล (ตั้งใจ)`);
+            }
             body.files = [slip];
           }
           if (SEED_NEEDS_MONEY.includes(step)) {
@@ -4704,6 +4736,236 @@
         return `เดินสถานะสำเร็จ ${ok} ใบ · ไม่สำเร็จ ${fail} ใบ`;
       }
 
+
+
+      function hashCode(str) {
+        let h = 0;
+        for (let i = 0; i < String(str).length; i++) h = (h * 31 + String(str).charCodeAt(i)) | 0;
+        return h;
+      }
+
+      // ═══ สลิปจำลอง ═══
+      // ของเดิมเป็น PNG 1x1 โปร่งใส เปิดดูไม่เห็นอะไร ⇒ เทสขั้นตอน "ตรวจสลิป" ไม่ได้เลย
+      // ตัวนี้วาดยอดกับเลขบิลลงบนภาพจริง คนตรวจจึงเทียบกับใบได้
+      const SEED_SLIP_W = 620, SEED_SLIP_H = 860;
+
+      function seedFormatMoney(n) {
+        return Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      function seedDrawSlip(info) {
+        const c = document.createElement("canvas");
+        c.width = SEED_SLIP_W; c.height = SEED_SLIP_H;
+        const x = c.getContext("2d");
+        const TH = '"Noto Sans Thai", "Sarabun", system-ui, sans-serif';
+
+        x.fillStyle = "#f4f6fb"; x.fillRect(0, 0, c.width, c.height);
+        x.fillStyle = "#ffffff";
+        x.fillRect(30, 30, c.width - 60, c.height - 60);
+        x.strokeStyle = "#d7dce8"; x.lineWidth = 2;
+        x.strokeRect(30, 30, c.width - 60, c.height - 60);
+
+        // หัวสลิป
+        x.fillStyle = "#1c2b4a";
+        x.fillRect(30, 30, c.width - 60, 92);
+        x.fillStyle = "#ffffff";
+        x.font = `600 26px ${TH}`;
+        x.fillText("สลิปโอนเงิน", 56, 76);
+        x.font = `400 15px ${TH}`;
+        x.fillStyle = "#9fb3d9";
+        x.fillText("ข้อมูลทดสอบ · ไม่ใช่รายการจริง", 56, 102);
+
+        // ยอดเงิน
+        x.fillStyle = "#5a6a86"; x.font = `400 15px ${TH}`;
+        x.fillText("จำนวนเงิน", 56, 178);
+        // สลิปยอดไม่ตรงต้องหน้าตาเหมือนสลิปปกติ ไม่งั้นคนตรวจไม่ได้ตรวจจริง
+        // (ลายน้ำ "ข้อมูลทดสอบ" ยังอยู่ กันเอาไปปนกับสลิปจริง)
+        x.fillStyle = "#10321f";
+        x.font = `700 46px ${TH}`;
+        x.fillText(seedFormatMoney(info.amount) + " " + (info.currency || "USDT"), 56, 232);
+
+        x.strokeStyle = "#e4e8f0"; x.lineWidth = 1;
+        x.beginPath(); x.moveTo(56, 288); x.lineTo(c.width - 56, 288); x.stroke();
+
+        const rows = [
+          ["เลขที่ใบแจ้งหนี้", info.invoiceNo || "(ยังไม่ออกเลข)"],
+          ["ลูกค้า", info.customer || "-"],
+          ["ยอดตามใบแจ้งหนี้", seedFormatMoney(info.billAmount) + " " + (info.currency || "USDT")],
+          ["ช่องทาง", info.channel || "CASH"],
+          ["วันเวลา", info.at || new Date().toLocaleString("th-TH")],
+          ["เลขอ้างอิง", info.ref || "-"],
+        ];
+        let y = 330;
+        for (const [k, v] of rows) {
+          x.fillStyle = "#7b879c"; x.font = `400 15px ${TH}`;
+          x.fillText(k, 56, y);
+          x.fillStyle = "#1c2b4a"; x.font = `600 17px ${TH}`;
+          x.fillText(String(v), 56, y + 26);
+          y += 68;
+        }
+
+        // ลายน้ำ กันเอาไปปนกับสลิปจริง
+        x.save();
+        x.translate(c.width / 2, c.height / 2 + 90);
+        x.rotate(-Math.PI / 9);
+        x.font = `800 58px ${TH}`;
+        x.fillStyle = "rgba(180, 35, 42, 0.13)";
+        x.textAlign = "center";
+        x.fillText("ข้อมูลทดสอบ", 0, 0);
+        x.fillText("TEST DATA", 0, 66);
+        x.restore();
+
+        x.fillStyle = "#9aa5b8"; x.font = `400 13px ${TH}`; x.textAlign = "left";
+        x.fillText("สร้างโดย mock_go · Seed Month", 56, c.height - 58);
+        return c;
+      }
+
+      function seedSlipBlob(info) {
+        return new Promise((resolve) =>
+          seedDrawSlip(info).toBlob((b) => resolve(b), "image/png"));
+      }
+
+      function seedPreviewSlip() {
+        const c = seedDrawSlip({
+          invoiceNo: "IN26010134", customer: "ตัวอย่างลูกค้า",
+          amount: 4761.9, billAmount: 4761.9, currency: "USDT", channel: "CASH",
+          ref: "SEED-PREVIEW", mismatch: document.getElementById("seedSlipMismatch")?.checked,
+        });
+        const w = window.open("", "_blank", "width=680,height=920");
+        if (!w) { seedShow("error", "เบราว์เซอร์บล็อกหน้าต่างใหม่", {}); return; }
+        w.document.write(`<title>ตัวอย่างสลิป</title><body style="margin:0;background:#222">
+          <img src="${c.toDataURL("image/png")}" style="width:100%">`);
+      }
+
+      // ═══ บิล ONE_TIME และ MANUAL ═══
+      // สองสายนี้อยู่คนละ collection กับบิลรายเดือน `/v2/billing-note/all` ไม่คืนมาเลย
+      // แต่ ledger ของรายงานรายรับ **ไม่ได้กรองชนิดบิล** — log สถานะ PAID/PARTIALPAID
+      // ของทั้งสองสายถูกนับเป็นเงินจริงเหมือนกัน จึงต้องมีในชุดทดสอบ
+      //
+      // ⚠️ ทั้งสองสายไม่มีช่องแนบสลิปใน API เลย (ONE_TIME ไม่มีโค้ดแตะไฟล์ ส่วน MANUAL
+      // มีช่อง system_file_ids แต่ไม่มี endpoint อัปที่คืน id) ⇒ ใส่เหตุผลไว้ใน note แทน
+      const SEED_NO_SLIP_NOTE = "[seed-month] mock payment — ไม่มีสลิปเพราะ API ไม่มีช่องอัป";
+
+      // ONE_TIME — กราฟของตัวเอง คนละชุดกับบิลรายเดือน (one_billing_note.go:918-924)
+      const SEED_ONETIME_PATHS = {
+        PENDING_APPROVED: ["PENDING_APPROVED"],
+        VOID:             ["PENDING_APPROVED", "VOID"],
+        APPROVED:         ["PENDING_APPROVED", "APPROVED"],
+        DELIVERED:        ["PENDING_APPROVED", "APPROVED", "DELIVERED"],
+        PENDING_PAID:     ["PENDING_APPROVED", "APPROVED", "DELIVERED", "PENDING_PAID"],
+        CHECKING_PAID:    ["PENDING_APPROVED", "APPROVED", "DELIVERED", "PENDING_PAID", "CHECKING_PAID"],
+        PAID:             ["PENDING_APPROVED", "APPROVED", "DELIVERED", "PENDING_PAID", "PAID"],
+        REFUNDED:         ["PENDING_APPROVED", "APPROVED", "DELIVERED", "PENDING_PAID", "PAID", "REFUNDED"],
+      };
+      const SEED_ONETIME_MONEY = ["PAID", "REFUNDED"];
+
+      // MANUAL — เปลี่ยนสถานะกับบันทึกการจ่ายเป็นคนละ endpoint
+      const SEED_MANUAL_PAY_HALF = "@pay-half";
+      const SEED_MANUAL_PAY_FULL = "@pay-full";
+      const SEED_MANUAL_PATHS = {
+        PENDING:     ["PENDING"],
+        VOID:        ["PENDING", "VOID"],
+        PARTIALPAID: ["PENDING", SEED_MANUAL_PAY_HALF],
+        PAID:        ["PENDING", SEED_MANUAL_PAY_FULL],
+      };
+
+      async function seedOneTimeList(base, token) {
+        const out = [];
+        for (let page = 1; page <= 20; page++) {
+          const j = await seedAccGet(base, token, `/v1/onetime-billing/search?page=${page}&limit=50`);
+          const b = j.data || [];
+          out.push(...b);
+          if (b.length < 50) break;
+        }
+        return out;   // สถานะอยู่ใน search เท่านั้น — GET /:id ไม่คืน status
+      }
+
+      async function seedPipeOneTime(ctx) {
+        const { base, token } = ctx;
+        const rows = await seedOneTimeList(base, token);
+        const targets = Object.keys(SEED_ONETIME_PATHS);
+        const free = rows.filter(r => r.status === "DRAFT" || r.status === "PENDING_APPROVED");
+        let ok = 0, fail = 0, i = 0;
+        for (const target of targets) {
+          if (SEED_PIPE.stop) break;
+          const bill = free[i++];
+          if (!bill) { seedLog(`   ข้าม ${target} — ใบไม่พอ`); continue; }
+          const total = Math.abs(Number(bill.total_price || 0));
+          let cur = bill.status, bad = null;
+          for (const step of SEED_ONETIME_PATHS[target]) {
+            if (SEED_PIPE.stop) break;
+            if (step === cur) continue;                     // ใบนี้ผ่านก้าวนี้มาแล้ว
+            const body = { invoice_id: bill.id, status: step, old_status: cur,
+                           note: SEED_NO_SLIP_NOTE, cause: "" };
+            if (SEED_ONETIME_MONEY.includes(step)) {
+              body.amount = total;                          // PAID ต้องคลุมยอดค้าง · REFUNDED ห้ามเกินยอดบิล
+              body.payment_type = "CASH";
+            }
+            const r = await seedAccSend(base, token, "PUT",
+              "/v1/onetime-billing/status/" + bill.id, body);
+            if (!r.ok) { bad = `${step} ${r.st} ${(r.j && r.j.message) || ""}`; break; }
+            cur = step;
+          }
+          if (bad) { fail++; seedLog(`   ✗ ONE_TIME ${target} · ${bad}`); }
+          else { ok++; seedLog(`   ✓ ONE_TIME ${target} · ${bill.invoice_number || bill.id.slice(-6)}`); }
+        }
+        return `ONE_TIME สำเร็จ ${ok} ใบ · ไม่สำเร็จ ${fail} ใบ`;
+      }
+
+      async function seedManualList(base, token, period) {
+        const out = [];
+        for (let page = 1; page <= 20; page++) {
+          const j = await seedAccGet(base, token, `/v1/billing-manual/search?page=${page}&limit=50`);
+          const b = j.data || [];
+          out.push(...b);
+          if (b.length < 50) break;
+        }
+        return out.filter(x => !period || x.period === period);
+      }
+
+      async function seedManualPay(base, token, bill, ratio) {
+        const owed = Math.abs(Number(bill.outstanding || bill.total || 0));
+        const amount = Math.round(owed * ratio * 100) / 100;
+        if (!(amount > 0)) return { ok: false, st: 0, j: { message: "ยอดค้างเป็นศูนย์" } };
+        return seedAccSend(base, token, "POST", `/v1/billing-manual/${bill.id}/payment`,
+          { amount: String(amount), channel: bill.payment_channel || "CASH",
+            note: SEED_NO_SLIP_NOTE });     // amount ต้องเป็นสตริง ตัวเลขล้วนโดน 1004
+      }
+
+      async function seedPipeManual(ctx) {
+        const { base, token, month, year } = ctx;
+        const period = `${year}-${String(month).padStart(2, "0")}`;
+        const rows = await seedManualList(base, token, period);
+        const free = rows.filter(x => x.status === "DRAFT" || x.status === "PENDING");
+        let ok = 0, fail = 0, i = 0;
+        for (const target of Object.keys(SEED_MANUAL_PATHS)) {
+          if (SEED_PIPE.stop) break;
+          const bill = free[i++];
+          if (!bill) { seedLog(`   ข้าม ${target} — ใบไม่พอ`); continue; }
+          let cur = bill.status, bad = null;
+          for (const step of SEED_MANUAL_PATHS[target]) {
+            if (SEED_PIPE.stop) break;
+            let r;
+            if (step === SEED_MANUAL_PAY_HALF || step === SEED_MANUAL_PAY_FULL) {
+              const fresh = (await seedAccGet(base, token, "/v1/billing-manual/" + bill.id)).data || bill;
+              r = await seedManualPay(base, token, Object.assign({}, bill, fresh),
+                                      step === SEED_MANUAL_PAY_FULL ? 1 : 0.4);
+            } else if (step === cur) {
+              continue;
+            } else {
+              const body = { status: step };
+              if (step === "VOID") body.void_reason = SEED_NO_SLIP_NOTE;   // VOID บังคับเหตุผล
+              r = await seedAccSend(base, token, "PUT", `/v1/billing-manual/${bill.id}/status`, body);
+            }
+            if (!r.ok) { bad = `${step} ${r.st} ${(r.j && r.j.message) || ""}`; break; }
+            if (r.j && r.j.data && r.j.data.status) cur = r.j.data.status;
+          }
+          if (bad) { fail++; seedLog(`   ✗ MANUAL ${target} · ${bad}`); }
+          else { ok++; seedLog(`   ✓ MANUAL ${target} · ${bill.invoice_no || bill.id.slice(-6)} → ${cur}`); }
+        }
+        return `MANUAL สำเร็จ ${ok} ใบ · ไม่สำเร็จ ${fail} ใบ`;
+      }
+
       async function seedCountStatuses() {
         try {
           const base = seedApiBase(), token = seedTokenValue();
@@ -4715,7 +4977,13 @@
               `/v2/billing-note/all?page=1&limit=1&year=${year}&month=${month}&status=${st}`);
             counts[st] = (j.pagination && j.pagination.total) || 0;
           }
-          seedShow("success", `${month}/${year}`, counts);
+          const ot = {}, mn = {};
+          for (const r of await seedOneTimeList(base, token))
+            ot[r.status] = (ot[r.status] || 0) + 1;
+          for (const r of await seedManualList(base, token, `${year}-${String(month).padStart(2, "0")}`))
+            mn[r.status] = (mn[r.status] || 0) + 1;
+          seedShow("success", `${month}/${year}`,
+            { "บิลรายเดือน": counts, "ONE_TIME (ทุกเดือน)": ot, "MANUAL": mn });
         } catch (e) {
           seedShow("error", seedErrText(e), {});
         }
@@ -4749,6 +5017,8 @@
           ["seedPipeWl",     "ใส่ผล AUTO_PLAY",    seedPipeAutoplay],
           ["seedPipeSweep",  "ลบใบยอด 0",          seedPipeSweepZero],
           ["seedPipeStatus", "เดินสถานะ",           seedPipeStatuses],
+          ["seedPipeOneTime","เดินสถานะ ONE_TIME",  seedPipeOneTime],
+          ["seedPipeManual", "เดินสถานะ MANUAL",    seedPipeManual],
         ];
         try {
           for (const [flag, name, fn] of steps) {
