@@ -516,6 +516,8 @@ func superAPIHandler(w http.ResponseWriter, r *http.Request) {
 // data เป็น object เดี่ยว และ memberWl / rawMemberWl ต้องเป็น "สตริง" — ส่งเป็นเลขแล้ว BE
 // unmarshal พัง (GeneralErr, ไม่เขียน snapshot) · prefix ต้องเป็น null หรือตรง UserProduct.Prefix
 // เป๊ะ ไม่งั้น snapshot ถูก key ผิดเงียบ ๆ (api/snapshot.go:704-708)
+// validAmount (ยอดเดิมพัน · ACC-2857 BR-19) ส่งค่าดิบของแถวตามที่ใส่ไว้ (ตัวเลข ข้อความ object null)
+// แถวไม่มีช่องนี้ = ไม่ส่งช่องนี้ · BE เก็บลง snapshot และ job Turnover ใช้ต่อ
 func respondSuperAPIWinlose(w http.ResponseWriter, req RequestPayload) {
 	currency := req.Cur
 	if currency == "" {
@@ -530,12 +532,15 @@ func respondSuperAPIWinlose(w http.ResponseWriter, req RequestPayload) {
 	}
 	memberWl := 0.0
 	var prefix *string
+	var validAmount interface{}
+	hasValidAmount := false
 	if item, ok := selectWinloseItem(req, currency); ok {
 		if suspended, has := getSuspendedFlag(item); has && suspended {
 			writeJSON(w, http.StatusOK, map[string]interface{}{"code": 403, "msg": "Permission denied."})
 			return
 		}
 		memberWl = num(item, "memberWl")
+		validAmount, hasValidAmount = item["validAmount"]
 		if u := str(item, "username"); u != "" {
 			username = u
 		}
@@ -545,12 +550,16 @@ func respondSuperAPIWinlose(w http.ResponseWriter, req RequestPayload) {
 		prefix = prefixPtr(item)
 	}
 	wl := strconv.FormatFloat(memberWl, 'f', -1, 64)
+	data := map[string]interface{}{
+		"username": username, "prefix": prefix, "currency": currency,
+		"memberWl": wl, "rawMemberWl": wl,
+	}
+	if hasValidAmount {
+		data["validAmount"] = validAmount
+	}
 	writeJSON(w, http.StatusOK, map[string]interface{}{
 		"code": 0, "msg": "SUCCESS",
-		"data": map[string]interface{}{
-			"username": username, "prefix": prefix, "currency": currency,
-			"memberWl": wl, "rawMemberWl": wl,
-		},
+		"data": data,
 	})
 }
 
